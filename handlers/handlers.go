@@ -8,13 +8,22 @@ import (
 
 	"time"
 
+	"github.com/go-resty/resty/v2"
 	"github.com/gorilla/mux"
 	"github.com/jelias2/infra-test/apis"
 	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 )
 
+type Handler struct {
+	Log                        *zap.Logger
+	Resty                      *resty.Client
+	Mainnet_http_endpoint      string
+	Mainnet_websocket_endpoint string
+}
+
 // Healthcheck will display test response to make sure the server is running
-func Healthcheck(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) Healthcheck(w http.ResponseWriter, r *http.Request) {
 
 	log.Info("Healthcheck ")
 	w.Header().Set("Content-Type", "application/json")
@@ -26,15 +35,73 @@ func Healthcheck(w http.ResponseWriter, r *http.Request) {
 }
 
 // Get all books
-func GetBooks(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetBooks(w http.ResponseWriter, r *http.Request) {
 	// Hardcoded data - @todo: add database
-
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(apis.Book{})
 }
 
+// Get ethblock number
+func (h *Handler) GetBlockNumber(w http.ResponseWriter, r *http.Request) {
+	h.Log.Info("Entered GetBlockNumber")
+	body := `{"jsonrpc":"2.0","method":"eth_blockNumber","params": [],"id":1}`
+	result := &apis.GetBlockNumberResponse{}
+	resp, err := h.Resty.R().SetBody(body).
+		SetResult(result).
+		Post(h.Mainnet_http_endpoint)
+	h.handleResponse("GetBlockNumber", resp, err)
+	json.NewEncoder(w).Encode(result)
+}
+
+// Get ethblock number
+func (h *Handler) GetGasPrice(w http.ResponseWriter, r *http.Request) {
+	h.Log.Info("Entered GetGasPrice")
+	body := `{"jsonrpc":"2.0","method":"eth_gasPrice","params": [],"id":1}`
+	result := &apis.GetBlockNumberResponse{}
+	resp, err := h.Resty.R().SetBody(body).
+		SetResult(result).
+		Post(h.Mainnet_http_endpoint)
+	h.handleResponse("GetBlockNumber", resp, err)
+	json.NewEncoder(w).Encode(result)
+}
+
+// func HexStringToInt(hexaString string) (intString string, err error) {
+// 	// replace 0x or 0X with empty String
+// 	numberStr := strings.Replace(hexaString, "0x", "", -1)
+// 	numberStr = strings.Replace(numberStr, "0X", "", -1)
+// 	output, err := strconv.ParseInt(numberStr, 16, 64)
+// 	if err != nil {
+// 		fmt.Println(err)
+// 		return
+// 	}
+// 	intString = string(output)
+// 	return
+// }
+
+// func (h *Handler) PostRequest(endpoint string, result interface{}, body string) (interface{}, error) {
+// 	h.Log.Info("Entered PostRequest")
+// 	resp, err := h.Resty.R().SetBody(body).
+// 		SetResult(result).
+// 		Post(endpoint)
+// 	h.Log.Info("Recieved response from PostRequest")
+// 	h.handleResponse(resp, err)
+// 	return resp.Body, err
+// }
+
+func (h *Handler) handleResponse(caller string, resp *resty.Response, err error) {
+	h.Log.Info("Handling response from", zap.String("caller", caller))
+	// Explore response object
+	h.Log.Info("Response Info:",
+		zap.Error(err),
+		zap.Int("Status Code:", resp.StatusCode()),
+		zap.String("Status     :", resp.Status()),
+		zap.String("Proto      :", resp.Proto()),
+		zap.Time("Received At:", resp.ReceivedAt()),
+		zap.String("Body :\n", string(resp.Body())))
+}
+
 // Get single book
-func GetBook(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetBook(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r) // Gets params
 
@@ -51,7 +118,7 @@ func GetBook(w http.ResponseWriter, r *http.Request) {
 }
 
 // Add new book
-func CreateBook(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) CreateBook(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	var book apis.Book
 	_ = json.NewDecoder(r.Body).Decode(&book)
@@ -64,7 +131,7 @@ func CreateBook(w http.ResponseWriter, r *http.Request) {
 }
 
 // Update book
-func UpdateBook(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) UpdateBook(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r)
 	var books []apis.Book
@@ -82,7 +149,7 @@ func UpdateBook(w http.ResponseWriter, r *http.Request) {
 }
 
 // Delete book
-func DeleteBook(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) DeleteBook(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r)
 	var books []apis.Book

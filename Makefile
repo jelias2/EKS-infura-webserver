@@ -6,10 +6,12 @@ GIT_HASH      := $(shell git rev-parse --short HEAD)
 
 .PHONY: bin
 bin:
+	cd $(WORKSPACE) && source .envrc
 	cd $(SRC_PATH) && go build -o $(BUILD_OUTPUT)/infra-server-bin
 
 .PHONY: binrun
 binrun:
+	cd $(WORKSPACE) && source .envrc
 	cd $(SRC_PATH) && go build -o $(BUILD_OUTPUT)/infra-server-bin
 	cd $(BUILD_OUTPUT) && ./infra-server-bin
 

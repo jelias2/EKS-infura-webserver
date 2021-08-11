@@ -20,3 +20,15 @@ type Healthcheck struct {
 	Message  string `json: message`
 	Datetime string `json: datetime`
 }
+
+type GetBlockNumberResponse struct {
+	Jsonrpc string `json:"jsonrpc"`
+	Id      int    `json:"id"`
+	Result  string `json:"result"`
+}
+
+type GetGasPrice struct {
+	Jsonrpc string `json:"jsonrpc"`
+	Id      int    `json:"id"`
+	Result  string `json:"result"`
+}
