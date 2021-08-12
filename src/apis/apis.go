@@ -17,3 +17,8 @@ type GetGasPrice struct {
 	Id      int    `json:"id"`
 	Result  string `json:"result"`
 }
+
+type ErrorResponse struct {
+	StatusCode int    `json:"statuscode"`
+	Message    string `json:"message"`
+}
