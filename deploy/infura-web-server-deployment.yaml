@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: infura-webserver-deployment
+  labels:
+    app: infura-webserver-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: infura-webserver-deployment
+  template:
+    metadata:
+      labels:
+        app: infura-webserver-deployment 
+    spec:
+      containers:
+      - name: infura-webserver-deployment
+        image: infura-web-server:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8000

@@ -12,7 +12,6 @@ import (
 	"github.com/jelias2/infra-test/src/apis"
 
 	"github.com/go-resty/resty/v2"
-	log "github.com/sirupsen/logrus"
 	"go.uber.org/zap"
 )
 
@@ -26,7 +25,7 @@ type Handler struct {
 // Healthcheck will display test response to make sure the server is running
 func (h *Handler) Healthcheck(w http.ResponseWriter, r *http.Request) {
 
-	log.Info("Healthcheck ")
+	h.Log.Info("Healthcheck")
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(apis.Healthcheck{
 		Status:   200,
