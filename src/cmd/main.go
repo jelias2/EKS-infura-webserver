@@ -3,9 +3,11 @@ package main
 import (
 	"net/http"
 	"os"
+	"os/signal"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
 	"github.com/jelias2/infra-test/src/handlers"
 	"go.uber.org/zap"
 )
@@ -20,23 +22,53 @@ func main() {
 	log.Info("Creating mux router and initalizing mux router")
 	r := mux.NewRouter()
 
-	project_id := os.Getenv("PROJECT_ID")
-	project_secret := os.Getenv("PROJECT_SECRET")
-	mainnet_http_endpoint := os.Getenv("MAINNET_HTTP_ENDPOINT")
-	mainnet_websocket_endpoint := os.Getenv("MAINNET_WEBSOCKET_ENDPOINT")
+	projectID := os.Getenv("PROJECT_ID")
+	projectSecret := os.Getenv("PROJECT_SECRET")
+	mainnetHTTPEndpoint := os.Getenv("MAINNET_HTTP_ENDPOINT")
+	mainnetWebsocketEndpoint := os.Getenv("MAINNET_WEBSOCKET_ENDPOINT")
 
-	log.Info("Creating go-resty client",
-		zap.String("Project_id", project_id),
-		zap.String("project_secret", project_secret),
-		zap.String("mainnet_http_endpoint", mainnet_http_endpoint),
-		zap.String("mainnet_websocket_endpoint", mainnet_websocket_endpoint),
+	log.Info("Config vars",
+		zap.String("Project_id", projectID),
+		zap.String("projectSecret", projectSecret),
+		zap.String("mainnetHTTPEndpoint", mainnetHTTPEndpoint),
+		zap.String("mainnetWebsocketEndpoint", mainnetWebsocketEndpoint),
 	)
+
+	interrupt := make(chan os.Signal, 1) // Channel to listen for interrupt signal to terminate gracefully
+	signal.Notify(interrupt, os.Interrupt)
+
+	log.Info("Websocket connecting to", zap.String("Url", mainnetWebsocketEndpoint))
+	ws_client, _, err := websocket.DefaultDialer.Dial(mainnetWebsocketEndpoint, nil)
+	if err != nil {
+		log.Fatal("Fatal Dial Error:", zap.Error(err))
+	}
+	defer ws_client.Close()
+
+	go func() {
+		for {
+			sig := <-interrupt
+			if sig != nil {
+				log.Info("Websocket Recieved Interrupt, closing channel")
+				// Cleanly close the connection by sending a close message and then
+				// waiting (with timeout) for the server to close the connection.
+				err := ws_client.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+				if err != nil {
+					log.Info("Error Closing Socket:", zap.Error(err))
+					return
+				}
+				// Needs improvement
+				// Without this ctrl-c kills the websocket server remains hanging
+				os.Exit(1)
+			}
+		}
+	}()
 
 	handler := &handlers.Handler{
 		Log:                        log,
 		Resty:                      resty.New(),
-		Mainnet_websocket_endpoint: mainnet_websocket_endpoint,
-		Mainnet_http_endpoint:      mainnet_http_endpoint,
+		Mainnet_websocket_endpoint: mainnetWebsocketEndpoint,
+		Mainnet_http_endpoint:      mainnetHTTPEndpoint,
+		WebSocket:                  ws_client,
 	}
 
 	// Route handles & endpoints
@@ -44,8 +76,11 @@ func main() {
 	r.HandleFunc("/", handler.Healthcheck).Methods("GET")
 	r.HandleFunc("/blocknumber", handler.GetBlockNumber).Methods("GET")
 	r.HandleFunc("/gasprice", handler.GetGasPrice).Methods("GET")
-	r.HandleFunc("/getblockbynumber", handler.GetBlockByNumber).Methods("POST")
-	r.HandleFunc("/gettxbyblockandindex", handler.GetTransactionByBlockNumberAndIndex).Methods("POST")
+	r.HandleFunc("/blockbynumber", handler.GetBlockByNumber).Methods("POST")
+	r.HandleFunc("/txbyblockandindex", handler.GetTransactionByBlockNumberAndIndex).Methods("POST")
+
+	r.HandleFunc("/ws/gasprice", handler.WebSocketGetGasPrice).Methods("GET")
+	r.HandleFunc("/ws/blockbynumber", handler.WebSocketGetGasPrice).Methods("GET")
 
 	// Start server
 	log.Info("Beginning to server traffic on port")

@@ -9,6 +9,7 @@ import (
 
 	"time"
 
+	"github.com/gorilla/websocket"
 	"github.com/jelias2/infra-test/src/apis"
 
 	"github.com/go-resty/resty/v2"
@@ -18,6 +19,7 @@ import (
 type Handler struct {
 	Log                        *zap.Logger
 	Resty                      *resty.Client
+	WebSocket                  *websocket.Conn
 	Mainnet_http_endpoint      string
 	Mainnet_websocket_endpoint string
 }
