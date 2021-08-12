@@ -16,3 +16,14 @@ type Transaction struct {
 	V                string `json:"v"`
 	Value            string `json:"value"`
 }
+
+type GetTransactionByBlockNumberAndIndexRequest struct {
+	Block string `json:"block"`
+	Index string `json:"index"`
+}
+
+type GetTransactionByBlockNumberAndIndexResponse struct {
+	Jsonrpc string      `json:"jsonrpc"`
+	Id      int         `json:"id"`
+	Result  Transaction `json:"result"`
+}
