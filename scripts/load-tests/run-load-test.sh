@@ -12,8 +12,8 @@ sleep 5
 
 # Would like to run in docker container but 2 docker containers 
 # don't like pinging eachother over localhost
-# docker run -i loadimpact/k6 run - <${WORKSPACE}/scripts/load-tests/simple-health-check.js
+docker run -i loadimpact/k6 --out influxdb=http://host.docker.internal:8086/k6 run - < ${1}
 
-k6 run ${1}
+#k6 run ${1}
 
 docker kill $(docker ps | grep infura-web-server | awk '{printf("%s", $1)}')

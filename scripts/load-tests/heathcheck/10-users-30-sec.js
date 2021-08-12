@@ -5,7 +5,7 @@ export let options = {
   duration: '30s',
 };
 export default function () {
-  http.get('http://localhost:8000/health');
+  http.get('http://host.docker.internal:8000/health');
   sleep(1);
 }
 

@@ -36,24 +36,31 @@ func (h *Handler) Healthcheck(w http.ResponseWriter, r *http.Request) {
 
 // Get ethblock number
 func (h *Handler) GetBlockNumber(w http.ResponseWriter, r *http.Request) {
-	h.Log.Info("Entered GetBlockNumber")
-	body := `{"jsonrpc":"2.0","method":"eth_blockNumber","params": [],"id":1}`
-	h.Log.Info("GetBlockNumber body", zap.String("Body", body))
+	getBlockBody := createRequestBody(apis.GetBlockNumber, []string{})
 	result := &apis.GetBlockNumberResponse{}
-	resp, err := h.Resty.R().SetBody(body).
+	resp, err := h.Resty.R().SetBody(getBlockBody).
 		SetResult(result).
 		Post(h.Mainnet_http_endpoint)
 	h.debugResponse("GetBlockNumber", resp, err)
 	json.NewEncoder(w).Encode(result)
 }
 
+func createRequestBody(method apis.RPCCall, params []string) *apis.InfuraRequestBody {
+	return &apis.InfuraRequestBody{
+		JsonRPC: apis.RPCVersion2,
+		Method:  method,
+		Params:  params,
+		ID:      apis.RequestID,
+	}
+}
+
 // Get GetGasPrice number
 func (h *Handler) GetGasPrice(w http.ResponseWriter, r *http.Request) {
 
 	h.Log.Info("Entered GetGasPrice")
-	body := `{"jsonrpc":"2.0","method":"eth_gasPrice","params": [],"id":1}`
-	result := &apis.GetBlockNumberResponse{}
-	resp, err := h.Resty.R().SetBody(body).
+	getGasBody := createRequestBody(apis.GetGasPrice, []string{})
+	result := &apis.GetGasPriceResponse{}
+	resp, err := h.Resty.R().SetBody(getGasBody).
 		SetResult(result).
 		Post(h.Mainnet_http_endpoint)
 	h.debugResponse("GetBlockNumber", resp, err)
@@ -81,8 +88,9 @@ func (h *Handler) GetBlockByNumber(w http.ResponseWriter, r *http.Request) {
 			Message:    "Malformed Request",
 		})
 	} else {
+		//Can't use create RequestBody because 2nd param is bool with no quotes
 		body := fmt.Sprintf(`{"jsonrpc":"2.0","method":"eth_getBlockByNumber","params":["%s",%s],"id":1}`, getBlockByNumberRequest.Block, getBlockByNumberRequest.TxDetails)
-		h.Log.Debug("GetBlockByNumber body", zap.String("Body", body))
+		h.Log.Info("GetBlockByNumber body", zap.String("Body", body))
 
 		if txdetails {
 			json.NewEncoder(w).Encode(h.TxDetailsResponse(body))
@@ -141,18 +149,15 @@ func (h *Handler) GetTransactionByBlockNumberAndIndex(w http.ResponseWriter, r *
 			Message:    "Malformed Request",
 		})
 	} else {
-		body := fmt.Sprintf(`{"jsonrpc":"2.0","method":"eth_getTransactionByBlockNumberAndIndex","params":["%s","%s"],"id":1}`, getTxReq.Block, getTxReq.Index)
-		h.Log.Info("GetBlockByNumber body", zap.String("Body", body))
-
+		getGasBody := createRequestBody(apis.GetTransactionByBlockNumberAndIndex, []string{getTxReq.Block, getTxReq.Index})
 		result := &apis.GetTransactionByBlockNumberAndIndexResponse{}
-		resp, err = h.Resty.R().SetBody(body).
+		resp, err = h.Resty.R().SetBody(getGasBody).
 			SetResult(result).
 			Post(h.Mainnet_http_endpoint)
 		if err != nil {
 			h.Log.Error("Error", zap.Error(err))
 		}
 		h.debugResponse("GetTransactionByBlockNumberAndIndex", resp, err)
-
 		json.NewEncoder(w).Encode(result)
 	}
 }
