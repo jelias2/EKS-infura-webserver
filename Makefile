@@ -1,5 +1,5 @@
 WORKSPACE     := $(shell pwd)
-SRC_PATH      := ${WORKSPACE}/src
+SRC_PATH      := ${WORKSPACE}/src/cmd
 BUILD_OUTPUT  := ${WORKSPACE}/build
 BUILD_TIME    := $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 GIT_HASH      := $(shell git rev-parse --short HEAD)

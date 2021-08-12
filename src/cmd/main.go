@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	"github.com/gorilla/mux"
-	"github.com/jelias2/infra-test/handlers"
+	"github.com/jelias2/infra-test/src/handlers"
 	"go.uber.org/zap"
 )
 
