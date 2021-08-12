@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"math/rand"
 	"net/http"
 	"strconv"
 
@@ -13,7 +12,6 @@ import (
 	"github.com/jelias2/infra-test/src/apis"
 
 	"github.com/go-resty/resty/v2"
-	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 	"go.uber.org/zap"
 )
@@ -35,13 +33,6 @@ func (h *Handler) Healthcheck(w http.ResponseWriter, r *http.Request) {
 		Message:  "Healthcheck response",
 		Datetime: time.Now().String(),
 	})
-}
-
-// Get all books
-func (h *Handler) GetBooks(w http.ResponseWriter, r *http.Request) {
-	// Hardcoded data - @todo: add database
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(apis.Book{})
 }
 
 // Get ethblock number
@@ -158,66 +149,4 @@ func (h *Handler) handleResponse(caller string, resp *resty.Response, err error)
 		zap.String("Proto      :", resp.Proto()),
 		zap.Time("Received At:", resp.ReceivedAt()))
 	// zap.String("Body :\n", string(resp.Body())))
-}
-
-// Get single book
-func (h *Handler) GetBook(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	params := mux.Vars(r) // Gets params
-
-	var books []apis.Book
-	// Loop through books and find one with the id from the params
-	books = append(books, apis.Book{ID: "1", Isbn: "438227", Title: "apis.Book One", Author: &apis.Author{Firstname: "John", Lastname: "Doe"}})
-	for _, item := range books {
-		if item.ID == params["id"] {
-			json.NewEncoder(w).Encode(item)
-			return
-		}
-	}
-	json.NewEncoder(w).Encode(&apis.Book{})
-}
-
-// Add new book
-func (h *Handler) CreateBook(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	var book apis.Book
-	_ = json.NewDecoder(r.Body).Decode(&book)
-	book.ID = strconv.Itoa(rand.Intn(100000000)) // Mock ID - not safe
-
-	var books []apis.Book
-	// Loop through books and find one with the id from the params
-	books = append(books, apis.Book{ID: "1", Isbn: "438227", Title: "Book One", Author: &apis.Author{Firstname: "John", Lastname: "Doe"}})
-	json.NewEncoder(w).Encode(book)
-}
-
-// Update book
-func (h *Handler) UpdateBook(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	params := mux.Vars(r)
-	var books []apis.Book
-	for index, item := range books {
-		if item.ID == params["id"] {
-			books = append(books[:index], books[index+1:]...)
-			var book apis.Book
-			_ = json.NewDecoder(r.Body).Decode(&book)
-			book.ID = params["id"]
-			books = append(books, book)
-			json.NewEncoder(w).Encode(book)
-			return
-		}
-	}
-}
-
-// Delete book
-func (h *Handler) DeleteBook(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	params := mux.Vars(r)
-	var books []apis.Book
-	for index, item := range books {
-		if item.ID == params["id"] {
-			books = append(books[:index], books[index+1:]...)
-			break
-		}
-	}
-	json.NewEncoder(w).Encode(books)
 }

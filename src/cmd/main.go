@@ -46,9 +46,6 @@ func main() {
 	r.HandleFunc("/gasprice", handler.GetGasPrice).Methods("GET")
 	r.HandleFunc("/getblockbynumber", handler.GetBlockByNumber).Methods("POST")
 	r.HandleFunc("/gettxbyblockandindex", handler.GetTransactionByBlockNumberAndIndex).Methods("POST")
-	// r.HandleFunc("/books", handler.CreateBook).Methods("POST")
-	// r.HandleFunc("/books/{id}", handler.UpdateBook).Methods("PUT")
-	// r.HandleFunc("/books/{id}", handler.DeleteBook).Methods("DELETE")
 
 	// Start server
 	log.Info("Beginning to server traffic on port")
