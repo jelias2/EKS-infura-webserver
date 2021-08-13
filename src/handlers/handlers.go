@@ -47,15 +47,6 @@ func (h *Handler) GetBlockNumber(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(result)
 }
 
-func createRequestBody(method apis.RPCCall, params []string) *apis.InfuraRequestBody {
-	return &apis.InfuraRequestBody{
-		JsonRPC: apis.RPCVersion2,
-		Method:  method,
-		Params:  params,
-		ID:      apis.RequestID,
-	}
-}
-
 // Get GetGasPrice number
 func (h *Handler) GetGasPrice(w http.ResponseWriter, r *http.Request) {
 
@@ -89,17 +80,19 @@ func (h *Handler) GetBlockByNumber(w http.ResponseWriter, r *http.Request) {
 			StatusCode: 400,
 			Message:    "Malformed Request",
 		})
-	} else {
-		//Can't use create RequestBody because 2nd param is bool with no quotes
-		body := fmt.Sprintf(`{"jsonrpc":"2.0","method":"eth_getBlockByNumber","params":["%s",%s],"id":1}`, getBlockByNumberRequest.Block, getBlockByNumberRequest.TxDetails)
-		h.Log.Info("GetBlockByNumber body", zap.String("Body", body))
-
-		if txdetails {
-			json.NewEncoder(w).Encode(h.TxDetailsResponse(body))
-		} else {
-			json.NewEncoder(w).Encode(h.NoTxDetailsResponse(body))
-		}
+		return
 	}
+
+	//Can't use create RequestBody because 2nd param is bool with no quotes
+	body := fmt.Sprintf(`{"jsonrpc":"2.0","method":"eth_getBlockByNumber","params":["%s",%s],"id":1}`, getBlockByNumberRequest.Block, getBlockByNumberRequest.TxDetails)
+	h.Log.Info("GetBlockByNumber body", zap.String("Body", body))
+
+	if txdetails {
+		json.NewEncoder(w).Encode(h.TxDetailsResponse(body))
+	} else {
+		json.NewEncoder(w).Encode(h.NoTxDetailsResponse(body))
+	}
+
 }
 
 func (h *Handler) TxDetailsResponse(body string) *apis.GetBlockByNumberTxDetailsResponse {
@@ -181,4 +174,13 @@ func (h *Handler) debugResponse(caller string, resp *resty.Response, err error) 
 		zap.String("Proto      :", resp.Proto()),
 		zap.Time("Received At:", resp.ReceivedAt()))
 	// zap.String("Body :\n", string(resp.Body())))
+}
+
+func createRequestBody(method apis.RPCCall, params []string) *apis.InfuraRequestBody {
+	return &apis.InfuraRequestBody{
+		JsonRPC: apis.RPCVersion2,
+		Method:  method,
+		Params:  params,
+		ID:      apis.RequestID,
+	}
 }

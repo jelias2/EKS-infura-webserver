@@ -74,13 +74,15 @@ func main() {
 	// Route handles & endpoints
 	r.HandleFunc("/health", handler.Healthcheck).Methods("GET")
 	r.HandleFunc("/", handler.Healthcheck).Methods("GET")
+
 	r.HandleFunc("/blocknumber", handler.GetBlockNumber).Methods("GET")
 	r.HandleFunc("/gasprice", handler.GetGasPrice).Methods("GET")
 	r.HandleFunc("/blockbynumber", handler.GetBlockByNumber).Methods("POST")
 	r.HandleFunc("/txbyblockandindex", handler.GetTransactionByBlockNumberAndIndex).Methods("POST")
 
 	r.HandleFunc("/ws/gasprice", handler.WebSocketGetGasPrice).Methods("GET")
-	r.HandleFunc("/ws/blockbynumber", handler.WebSocketGetGasPrice).Methods("GET")
+	r.HandleFunc("/ws/blocknumber", handler.WebSocketGetBlockNumber).Methods("GET")
+	r.HandleFunc("/ws/blockbynumber", handler.WebSocketGetBlockByNumber).Methods("POST")
 
 	// Start server
 	log.Info("Beginning to server traffic on port")
