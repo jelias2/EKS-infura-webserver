@@ -139,7 +139,6 @@ func (h *Handler) GetTransactionByBlockNumberAndIndex(w http.ResponseWriter, r *
 
 	var err error
 	var resp *resty.Response
-
 	w.Header().Set("Content-Type", "application/json")
 	h.Log.Info("Entered GetTransactionByBlockNumberAndIndex")
 	reqBody, _ := ioutil.ReadAll(r.Body)
@@ -167,13 +166,6 @@ func (h *Handler) GetTransactionByBlockNumberAndIndex(w http.ResponseWriter, r *
 		json.NewEncoder(w).Encode(result)
 	}
 }
-
-// func isHex(s string) bool {
-// 	if _, err := hex.DecodeString(s); err == nil {
-// 		return true
-// 	}
-// 	return false
-// }
 
 func (h *Handler) debugResponse(caller string, resp *resty.Response, err error) {
 	h.Log.Info("Handling response from", zap.String("caller", caller))

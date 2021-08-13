@@ -13,22 +13,9 @@ import (
 func (h *Handler) WebSocketGetBlockNumber(w http.ResponseWriter, r *http.Request) {
 
 	getBlockBody, _ := json.Marshal(createRequestBody(apis.GetBlockNumber, []string{}))
-	err := h.WebSocket.WriteMessage(websocket.TextMessage, getBlockBody)
-	if err != nil {
-		h.Log.Info("Error writing WebSocketGetBlockNumber websocket message", zap.Error(err))
-		json.NewEncoder(w).Encode(apis.ErrorResponse{
-			StatusCode: 400,
-			Message:    "Error writing websocket message",
-		})
-		return
-	}
-	_, message, err := h.WebSocket.ReadMessage()
-	if err != nil {
-		h.Log.Info("Error reading WebSocketGetBlockNumber websocket message", zap.Error(err))
-		json.NewEncoder(w).Encode(apis.ErrorResponse{
-			StatusCode: 400,
-			Message:    "Error reading websocket message",
-		})
+	message, ErrorResponse := h.WebSocketWriteAndRead(getBlockBody)
+	if ErrorResponse.Message != "" && ErrorResponse.StatusCode != 0 {
+		json.NewEncoder(w).Encode(ErrorResponse)
 		return
 	}
 	wsGetBlockNumberResponse := &apis.GetBlockNumberResponse{}
@@ -40,27 +27,36 @@ func (h *Handler) WebSocketGetBlockNumber(w http.ResponseWriter, r *http.Request
 func (h *Handler) WebSocketGetGasPrice(w http.ResponseWriter, r *http.Request) {
 
 	getBlockBody, _ := json.Marshal(createRequestBody(apis.GetGasPrice, []string{}))
-	err := h.WebSocket.WriteMessage(websocket.TextMessage, getBlockBody)
-	if err != nil {
-		h.Log.Info("Error writing WebSocketGetGasPrice websocket message", zap.Error(err))
-		json.NewEncoder(w).Encode(apis.ErrorResponse{
-			StatusCode: 400,
-			Message:    "Error writing websocket message",
-		})
-		return
-	}
-	_, message, err := h.WebSocket.ReadMessage()
-	if err != nil {
-		h.Log.Info("Error reading WebSocketGetGasPrice websocket message", zap.Error(err))
-		json.NewEncoder(w).Encode(apis.ErrorResponse{
-			StatusCode: 400,
-			Message:    "Error writing websocket message",
-		})
+	message, ErrorResponse := h.WebSocketWriteAndRead(getBlockBody)
+	if ErrorResponse.Message != "" && ErrorResponse.StatusCode != 0 {
+		json.NewEncoder(w).Encode(ErrorResponse)
 		return
 	}
 	wsGetGasResponse := &apis.GetGasPriceResponse{}
 	json.Unmarshal(message, wsGetGasResponse)
 	json.NewEncoder(w).Encode(wsGetGasResponse)
+}
+
+func (h *Handler) WebSocketWriteAndRead(body []byte) ([]byte, apis.ErrorResponse) {
+	errorMessage := ""
+	statusCode := 0
+	err := h.WebSocket.WriteMessage(websocket.TextMessage, body)
+	if err != nil {
+		h.Log.Info("Error writing WebSocketGetGasPrice websocket message", zap.Error(err))
+		errorMessage = err.Error()
+		statusCode = http.StatusBadRequest
+	}
+	_, message, err := h.WebSocket.ReadMessage()
+	if err != nil {
+		h.Log.Info("Error reading WebSocketGetGasPrice websocket message", zap.Error(err))
+		errorMessage = err.Error()
+		statusCode = http.StatusBadRequest
+	}
+	errorResponse := apis.ErrorResponse{
+		StatusCode: statusCode,
+		Message:    errorMessage,
+	}
+	return message, errorResponse
 }
 
 // WebSocketGetGasPrice
@@ -79,24 +75,17 @@ func (h *Handler) WebSocketGetBlockByNumber(w http.ResponseWriter, r *http.Reque
 
 	if txdetails {
 		json.NewEncoder(w).Encode(h.WebSocketGetBlockByNumberHandler(formmattedRequest, apis.GetBlockByNumberTxDetailsResponse{}))
-		return
 	}
 	json.NewEncoder(w).Encode(h.WebSocketGetBlockByNumberHandler(formmattedRequest, apis.GetBlockByNumberNoTxDetailsResponse{}))
 
 }
 
 func (h *Handler) WebSocketGetBlockByNumberHandler(body []byte, umarshallStruct interface{}) interface{} {
-	var err error
-	err = h.WebSocket.WriteMessage(websocket.TextMessage, []byte(body))
-	if err != nil {
-		h.Log.Info("Error writing WebSocketGetGasPrice websocket message", zap.Error(err))
-		return &apis.ErrorResponse{StatusCode: 400, Message: err.Error()}
-	}
-
-	_, message, err := h.WebSocket.ReadMessage()
-	if err != nil {
-		h.Log.Info("Error reading WebSocketGetGasPrice websocket message", zap.Error(err))
-		return apis.ErrorResponse{StatusCode: 400, Message: err.Error()}
+	var message []byte
+	var errorResponse apis.ErrorResponse
+	message, errorResponse = h.WebSocketWriteAndRead(body)
+	if errorResponse.Message != "" && errorResponse.StatusCode != 0 {
+		return errorResponse
 	}
 
 	// Umarshall response into the type of the umarshallStruct
@@ -111,6 +100,6 @@ func (h *Handler) WebSocketGetBlockByNumberHandler(body []byte, umarshallStruct 
 		return wsResult
 	default:
 		h.Log.Error("Improper Type")
-		return &apis.ErrorResponse{StatusCode: 400, Message: err.Error()}
+		return &apis.ErrorResponse{StatusCode: http.StatusBadRequest, Message: "Error Unmarshalling GetBlockResponse"}
 	}
 }
