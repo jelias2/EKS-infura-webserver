@@ -1,5 +1,7 @@
 package apis
 
+import "net/http"
+
 // Default Request Fields
 const RPCVersion2 = "2.0"
 const RequestID = 1
@@ -36,6 +38,11 @@ type GetGasPriceResponse struct {
 type ErrorResponse struct {
 	StatusCode int    `json:"statuscode"`
 	Message    string `json:"message"`
+}
+
+var MalformedRequestError = ErrorResponse{
+	StatusCode: http.StatusBadRequest,
+	Message:    MalformedRequestMessage,
 }
 
 type InfuraRequestBody struct {

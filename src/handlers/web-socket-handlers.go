@@ -93,10 +93,7 @@ func (h *Handler) WebSocketGetTransactionByBlockNumberAndIndex(w http.ResponseWr
 	}
 
 	if getTxReq.Block == "" || getTxReq.Index == "" {
-		json.NewEncoder(w).Encode(apis.ErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Message:    apis.MalformedRequestMessage,
-		})
+		json.NewEncoder(w).Encode(apis.MalformedRequestError)
 		return
 	}
 

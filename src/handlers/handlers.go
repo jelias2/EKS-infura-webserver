@@ -98,9 +98,7 @@ func (h *Handler) ParseGetBlockByNumberRequest(r *http.Request) ([]byte, bool, b
 
 	txdetails, err := strconv.ParseBool(getBlockByNumberRequest.TxDetails)
 	if getBlockByNumberRequest.Block == "" || err != nil {
-		errorBody, _ := json.Marshal(apis.ErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Message:    apis.MalformedRequestMessage})
+		errorBody, _ := json.Marshal(apis.MalformedRequestError)
 		return errorBody, false, false
 	}
 	// Can't use create RequestBody because 2nd param is bool with no quotes
@@ -147,10 +145,7 @@ func (h *Handler) GetTransactionByBlockNumberAndIndex(w http.ResponseWriter, r *
 	}
 
 	if getTxReq.Block == "" || getTxReq.Index == "" {
-		json.NewEncoder(w).Encode(apis.ErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Message:    apis.MalformedRequestMessage,
-		})
+		json.NewEncoder(w).Encode(apis.MalformedRequestError)
 		return
 	}
 
