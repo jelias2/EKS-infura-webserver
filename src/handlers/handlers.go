@@ -86,41 +86,35 @@ func (h *Handler) GetBlockByNumber(w http.ResponseWriter, r *http.Request) {
 	//Can't use create RequestBody because 2nd param is bool with no quotes
 	body := fmt.Sprintf(`{"jsonrpc":"2.0","method":"eth_getBlockByNumber","params":["%s",%s],"id":1}`, getBlockByNumberRequest.Block, getBlockByNumberRequest.TxDetails)
 	h.Log.Info("GetBlockByNumber body", zap.String("Body", body))
-
 	if txdetails {
-		json.NewEncoder(w).Encode(h.TxDetailsResponse(body))
+		json.NewEncoder(w).Encode(h.TxDetailsResponseBoth(body, apis.GetBlockByNumberTxDetailsResponse{}))
 	} else {
-		json.NewEncoder(w).Encode(h.NoTxDetailsResponse(body))
+		json.NewEncoder(w).Encode(h.TxDetailsResponseBoth(body, apis.GetBlockByNumberNoTxDetailsResponse{}))
 	}
-
 }
 
-func (h *Handler) TxDetailsResponse(body string) *apis.GetBlockByNumberTxDetailsResponse {
+func (h *Handler) TxDetailsResponseBoth(body string, unmashallStruct interface{}) interface{} {
 	var err error
 	var resp *resty.Response
-	result := &apis.GetBlockByNumberTxDetailsResponse{}
+
 	resp, err = h.Resty.R().SetBody(body).
-		SetResult(result).
 		Post(h.Mainnet_http_endpoint)
 	if err != nil {
 		h.Log.Error("Error", zap.Error(err))
 	}
 	h.debugResponse("GetBlockByNumber", resp, err)
-	return result
-}
-
-func (h *Handler) NoTxDetailsResponse(body string) *apis.GetBlockByNumberNoTxDetailsResponse {
-	var err error
-	var resp *resty.Response
-	result := &apis.GetBlockByNumberNoTxDetailsResponse{}
-	resp, err = h.Resty.R().SetBody(body).
-		SetResult(result).
-		Post(h.Mainnet_http_endpoint)
-	if err != nil {
-		h.Log.Error("Error", zap.Error(err))
+	switch unmashallStruct.(type) {
+	case apis.GetBlockByNumberTxDetailsResponse:
+		result := &apis.GetBlockByNumberTxDetailsResponse{}
+		json.Unmarshal(resp.Body(), result)
+		return result
+	case apis.GetBlockByNumberNoTxDetailsResponse:
+		result := &apis.GetBlockByNumberNoTxDetailsResponse{}
+		json.Unmarshal(resp.Body(), result)
+		return result
+	default:
+		return &apis.ErrorResponse{StatusCode: 400, Message: err.Error()}
 	}
-	h.debugResponse("GetBlockByNumber", resp, err)
-	return result
 }
 
 // GetBlockByNumber

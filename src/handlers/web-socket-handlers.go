@@ -94,16 +94,14 @@ func (h *Handler) WebSocketGetBlockByNumber(w http.ResponseWriter, r *http.Reque
 	body := []byte(fmt.Sprintf(`{"jsonrpc":"2.0","method":"eth_getBlockByNumber","params":["%s",%s],"id":1}`, getBlockByNumberRequest.Block, getBlockByNumberRequest.TxDetails))
 	h.Log.Info("GetBlockByNumber body", zap.String("Body", string(body)))
 
-	//TODO: Maybe use a function pointer in here to make it simpler, pass in an unmarshal function which is hardcode to type?
 	if txdetails {
-		json.NewEncoder(w).Encode(h.WebSocketTxDetailsResponse(body))
-	} else {
-		json.NewEncoder(w).Encode(h.WebSocketNoTxDetailsResponse(body))
+		json.NewEncoder(w).Encode(h.WebSocketGetBlockByNumberHandler(body, apis.GetBlockByNumberTxDetailsResponse{}))
 	}
+	json.NewEncoder(w).Encode(h.WebSocketGetBlockByNumberHandler(body, apis.GetBlockByNumberNoTxDetailsResponse{}))
 
 }
 
-func (h *Handler) WebSocketTxDetailsResponse(body []byte) interface{} {
+func (h *Handler) WebSocketGetBlockByNumberHandler(body []byte, umarshallStruct interface{}) interface{} {
 	var err error
 	err = h.WebSocket.WriteMessage(websocket.TextMessage, []byte(body))
 	if err != nil {
@@ -116,25 +114,19 @@ func (h *Handler) WebSocketTxDetailsResponse(body []byte) interface{} {
 		h.Log.Info("Error reading WebSocketGetGasPrice websocket message", zap.Error(err))
 		return apis.ErrorResponse{StatusCode: 400, Message: err.Error()}
 	}
-	wsResult := &apis.GetBlockByNumberTxDetailsResponse{}
-	//TODO: check for marshal error here
-	json.Unmarshal(message, wsResult)
-	return wsResult
-}
 
-func (h *Handler) WebSocketNoTxDetailsResponse(body []byte) interface{} {
-	err := h.WebSocket.WriteMessage(websocket.TextMessage, body)
-	if err != nil {
-		h.Log.Info("Error writing WebSocketNoTxDetailsResponse websocket message", zap.Error(err))
+	// Umarshall response into the type of the umarshallStruct
+	switch umarshallStruct.(type) {
+	case apis.GetBlockByNumberTxDetailsResponse:
+		wsResult := &apis.GetBlockByNumberTxDetailsResponse{}
+		json.Unmarshal(message, wsResult)
+		return wsResult
+	case apis.GetBlockByNumberNoTxDetailsResponse:
+		wsResult := &apis.GetBlockByNumberNoTxDetailsResponse{}
+		json.Unmarshal(message, wsResult)
+		return wsResult
+	default:
+		h.Log.Error("Improper Type")
 		return &apis.ErrorResponse{StatusCode: 400, Message: err.Error()}
 	}
-	_, message, err := h.WebSocket.ReadMessage()
-	if err != nil {
-		h.Log.Info("Error writing WebSocketNoTxDetailsResponse websocket message", zap.Error(err))
-		return &apis.ErrorResponse{StatusCode: 400, Message: err.Error()}
-	}
-	wsResult := &apis.GetBlockByNumberNoTxDetailsResponse{}
-	//TODO: check for marshal error here
-	json.Unmarshal(message, wsResult)
-	return wsResult
 }
