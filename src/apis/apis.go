@@ -13,6 +13,8 @@ const GetBlockByNumber RPCCall = "eth_getBlockByNumber"
 const GetTransactionByBlockNumberAndIndex RPCCall = "eth_getTransactionByBlockNumberAndIndex"
 const GetBlockByNumberRequestBodyTemplate string = `{"jsonrpc":"2.0","method":"eth_getBlockByNumber","params":["%s",%s],"id":1}`
 
+const MalformedRequestMessage = "Malformed Request"
+
 type Healthcheck struct {
 	Status   int    `json:"status"`
 	Message  string `json:"message"`

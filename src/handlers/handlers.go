@@ -26,11 +26,9 @@ type Handler struct {
 
 // Healthcheck will display test response to make sure the server is running
 func (h *Handler) Healthcheck(w http.ResponseWriter, r *http.Request) {
-
-	h.Log.Info("Healthcheck")
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(apis.Healthcheck{
-		Status:   200,
+		Status:   http.StatusAccepted,
 		Message:  "Healthcheck response",
 		Datetime: time.Now().String(),
 	})
@@ -38,6 +36,7 @@ func (h *Handler) Healthcheck(w http.ResponseWriter, r *http.Request) {
 
 // Get ethblock number
 func (h *Handler) GetBlockNumber(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	getBlockBody := createRequestBody(apis.GetBlockNumber, []string{})
 	result := &apis.GetBlockNumberResponse{}
 	resp, err := h.Resty.R().SetBody(getBlockBody).
@@ -73,10 +72,10 @@ func (h *Handler) GetBlockByNumber(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if txdetails {
-		json.NewEncoder(w).Encode(h.TxDetailsResponseBoth(formmattedRequest, apis.GetBlockByNumberTxDetailsResponse{}))
+		json.NewEncoder(w).Encode(h.TxDetailsResponse(formmattedRequest, apis.GetBlockByNumberTxDetailsResponse{}))
 		return
 	} else {
-		json.NewEncoder(w).Encode(h.TxDetailsResponseBoth(formmattedRequest, apis.GetBlockByNumberNoTxDetailsResponse{}))
+		json.NewEncoder(w).Encode(h.TxDetailsResponse(formmattedRequest, apis.GetBlockByNumberNoTxDetailsResponse{}))
 	}
 }
 
@@ -92,7 +91,7 @@ func (h *Handler) ParseGetBlockByNumberRequest(r *http.Request) ([]byte, bool, b
 	if err := json.Unmarshal(reqBody, &getBlockByNumberRequest); err != nil {
 		h.Log.Error("Error unmarshalling GetBlockByNumberRequest", zap.Error(err))
 		errorBody, _ := json.Marshal(apis.ErrorResponse{
-			StatusCode: 400,
+			StatusCode: http.StatusBadRequest,
 			Message:    err.Error()})
 		return errorBody, false, false
 	}
@@ -100,8 +99,8 @@ func (h *Handler) ParseGetBlockByNumberRequest(r *http.Request) ([]byte, bool, b
 	txdetails, err := strconv.ParseBool(getBlockByNumberRequest.TxDetails)
 	if getBlockByNumberRequest.Block == "" || err != nil {
 		errorBody, _ := json.Marshal(apis.ErrorResponse{
-			StatusCode: 400,
-			Message:    "Malformed Request"})
+			StatusCode: http.StatusBadRequest,
+			Message:    apis.MalformedRequestMessage})
 		return errorBody, false, false
 	}
 	// Can't use create RequestBody because 2nd param is bool with no quotes
@@ -110,7 +109,7 @@ func (h *Handler) ParseGetBlockByNumberRequest(r *http.Request) ([]byte, bool, b
 	return body, true, txdetails
 }
 
-func (h *Handler) TxDetailsResponseBoth(body []byte, unmashallStruct interface{}) interface{} {
+func (h *Handler) TxDetailsResponse(body []byte, unmashallStruct interface{}) interface{} {
 	var err error
 	var resp *resty.Response
 
@@ -130,7 +129,7 @@ func (h *Handler) TxDetailsResponseBoth(body []byte, unmashallStruct interface{}
 		json.Unmarshal(resp.Body(), result)
 		return result
 	default:
-		return &apis.ErrorResponse{StatusCode: 400, Message: err.Error()}
+		return &apis.ErrorResponse{StatusCode: http.StatusBadRequest, Message: err.Error()}
 	}
 }
 
@@ -150,8 +149,8 @@ func (h *Handler) GetTransactionByBlockNumberAndIndex(w http.ResponseWriter, r *
 	// if getTxReq.Block == "" || getTxReq.Index == "" || !isHex(getTxReq.Block) || !isHex(getTxReq.Index) {
 	if getTxReq.Block == "" || getTxReq.Index == "" {
 		json.NewEncoder(w).Encode(apis.ErrorResponse{
-			StatusCode: 400,
-			Message:    "Malformed Request",
+			StatusCode: http.StatusBadRequest,
+			Message:    apis.MalformedRequestMessage,
 		})
 	} else {
 		getGasBody := createRequestBody(apis.GetTransactionByBlockNumberAndIndex, []string{getTxReq.Block, getTxReq.Index})
