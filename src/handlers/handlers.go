@@ -146,24 +146,25 @@ func (h *Handler) GetTransactionByBlockNumberAndIndex(w http.ResponseWriter, r *
 		h.Log.Error("Error unmarshalling GetBlockByNumberRequest", zap.Error(err))
 	}
 
-	// if getTxReq.Block == "" || getTxReq.Index == "" || !isHex(getTxReq.Block) || !isHex(getTxReq.Index) {
 	if getTxReq.Block == "" || getTxReq.Index == "" {
 		json.NewEncoder(w).Encode(apis.ErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Message:    apis.MalformedRequestMessage,
 		})
-	} else {
-		getGasBody := createRequestBody(apis.GetTransactionByBlockNumberAndIndex, []string{getTxReq.Block, getTxReq.Index})
-		result := &apis.GetTransactionByBlockNumberAndIndexResponse{}
-		resp, err = h.Resty.R().SetBody(getGasBody).
-			SetResult(result).
-			Post(h.Mainnet_http_endpoint)
-		if err != nil {
-			h.Log.Error("Error", zap.Error(err))
-		}
-		h.debugResponse("GetTransactionByBlockNumberAndIndex", resp, err)
-		json.NewEncoder(w).Encode(result)
+		return
 	}
+
+	getBlockNumberAndTxBody := createRequestBody(apis.GetTransactionByBlockNumberAndIndex, []string{getTxReq.Block, getTxReq.Index})
+	result := &apis.GetTransactionByBlockNumberAndIndexResponse{}
+	resp, err = h.Resty.R().SetBody(getBlockNumberAndTxBody).
+		SetResult(result).
+		Post(h.Mainnet_http_endpoint)
+	if err != nil {
+		h.Log.Error("Error", zap.Error(err))
+	}
+	h.debugResponse("GetTransactionByBlockNumberAndIndex", resp, err)
+	json.NewEncoder(w).Encode(result)
+
 }
 
 func (h *Handler) debugResponse(caller string, resp *resty.Response, err error) {

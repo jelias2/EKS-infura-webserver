@@ -12,6 +12,8 @@ import (
 	"go.uber.org/zap"
 )
 
+//TODO:  Make all logs consistent format!!!
+
 // Main function
 func main() {
 
@@ -56,8 +58,7 @@ func main() {
 					log.Info("Error Closing Socket:", zap.Error(err))
 					return
 				}
-				// Needs improvement
-				// Without this ctrl-c kills the websocket server remains hanging
+				// Without this ctrl-c will kills the websocket, and leave the webserver hanging
 				os.Exit(1)
 			}
 		}
@@ -80,9 +81,10 @@ func main() {
 	r.HandleFunc("/blockbynumber", handler.GetBlockByNumber).Methods("POST")
 	r.HandleFunc("/txbyblockandindex", handler.GetTransactionByBlockNumberAndIndex).Methods("POST")
 
-	r.HandleFunc("/ws/gasprice", handler.WebSocketGetGasPrice).Methods("GET")
 	r.HandleFunc("/ws/blocknumber", handler.WebSocketGetBlockNumber).Methods("GET")
+	r.HandleFunc("/ws/gasprice", handler.WebSocketGetGasPrice).Methods("GET")
 	r.HandleFunc("/ws/blockbynumber", handler.WebSocketGetBlockByNumber).Methods("POST")
+	r.HandleFunc("/ws/txbyblockandindex", handler.WebSocketGetTransactionByBlockNumberAndIndex).Methods("POST")
 
 	// Start server
 	log.Info("Beginning to server traffic on port")

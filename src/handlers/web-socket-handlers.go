@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/gorilla/websocket"
@@ -25,7 +26,7 @@ func (h *Handler) WebSocketGetBlockNumber(w http.ResponseWriter, r *http.Request
 
 // WebSocketGetGasPrice
 func (h *Handler) WebSocketGetGasPrice(w http.ResponseWriter, r *http.Request) {
-
+	w.Header().Set("Content-Type", "application/json")
 	getBlockBody, _ := json.Marshal(createRequestBody(apis.GetGasPrice, []string{}))
 	message, ErrorResponse := h.WebSocketWriteAndRead(getBlockBody)
 	if ErrorResponse.Message != "" && ErrorResponse.StatusCode != 0 {
@@ -35,28 +36,6 @@ func (h *Handler) WebSocketGetGasPrice(w http.ResponseWriter, r *http.Request) {
 	wsGetGasResponse := &apis.GetGasPriceResponse{}
 	json.Unmarshal(message, wsGetGasResponse)
 	json.NewEncoder(w).Encode(wsGetGasResponse)
-}
-
-func (h *Handler) WebSocketWriteAndRead(body []byte) ([]byte, apis.ErrorResponse) {
-	errorMessage := ""
-	statusCode := 0
-	err := h.WebSocket.WriteMessage(websocket.TextMessage, body)
-	if err != nil {
-		h.Log.Info("Error writing WebSocketGetGasPrice websocket message", zap.Error(err))
-		errorMessage = err.Error()
-		statusCode = http.StatusBadRequest
-	}
-	_, message, err := h.WebSocket.ReadMessage()
-	if err != nil {
-		h.Log.Info("Error reading WebSocketGetGasPrice websocket message", zap.Error(err))
-		errorMessage = err.Error()
-		statusCode = http.StatusBadRequest
-	}
-	errorResponse := apis.ErrorResponse{
-		StatusCode: statusCode,
-		Message:    errorMessage,
-	}
-	return message, errorResponse
 }
 
 // WebSocketGetGasPrice
@@ -77,7 +56,6 @@ func (h *Handler) WebSocketGetBlockByNumber(w http.ResponseWriter, r *http.Reque
 		json.NewEncoder(w).Encode(h.WebSocketGetBlockByNumberHandler(formmattedRequest, apis.GetBlockByNumberTxDetailsResponse{}))
 	}
 	json.NewEncoder(w).Encode(h.WebSocketGetBlockByNumberHandler(formmattedRequest, apis.GetBlockByNumberNoTxDetailsResponse{}))
-
 }
 
 func (h *Handler) WebSocketGetBlockByNumberHandler(body []byte, umarshallStruct interface{}) interface{} {
@@ -102,4 +80,56 @@ func (h *Handler) WebSocketGetBlockByNumberHandler(body []byte, umarshallStruct 
 		h.Log.Error("Improper Type")
 		return &apis.ErrorResponse{StatusCode: http.StatusBadRequest, Message: "Error Unmarshalling GetBlockResponse"}
 	}
+}
+
+// WebSocketGetTransactionByBlockNumberAndIndex
+func (h *Handler) WebSocketGetTransactionByBlockNumberAndIndex(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Content-Type", "application/json")
+	reqBody, _ := ioutil.ReadAll(r.Body)
+	var getTxReq apis.GetTransactionByBlockNumberAndIndexRequest
+	if err := json.Unmarshal(reqBody, &getTxReq); err != nil {
+		h.Log.Error("Error unmarshalling GetBlockByNumberRequest", zap.Error(err))
+	}
+
+	if getTxReq.Block == "" || getTxReq.Index == "" {
+		json.NewEncoder(w).Encode(apis.ErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    apis.MalformedRequestMessage,
+		})
+		return
+	}
+
+	getBlockTxIndex, _ := json.Marshal(createRequestBody(apis.GetTransactionByBlockNumberAndIndex, []string{getTxReq.Block, getTxReq.Index}))
+	message, errorResponse := h.WebSocketWriteAndRead(getBlockTxIndex)
+	if errorResponse.Message != "" && errorResponse.StatusCode != 0 {
+		json.NewEncoder(w).Encode(errorResponse)
+	}
+
+	wsGetTxByBlockAndIndexResp := &apis.GetTransactionByBlockNumberAndIndexResponse{}
+	json.Unmarshal(message, wsGetTxByBlockAndIndexResp)
+	json.NewEncoder(w).Encode(wsGetTxByBlockAndIndexResp)
+
+}
+
+func (h *Handler) WebSocketWriteAndRead(body []byte) ([]byte, apis.ErrorResponse) {
+	errorMessage := ""
+	statusCode := 0
+	err := h.WebSocket.WriteMessage(websocket.TextMessage, body)
+	if err != nil {
+		h.Log.Info("Error writing WebSocketGetGasPrice websocket message", zap.Error(err))
+		errorMessage = err.Error()
+		statusCode = http.StatusBadRequest
+	}
+	_, message, err := h.WebSocket.ReadMessage()
+	if err != nil {
+		h.Log.Info("Error reading WebSocketGetGasPrice websocket message", zap.Error(err))
+		errorMessage = err.Error()
+		statusCode = http.StatusBadRequest
+	}
+	errorResponse := apis.ErrorResponse{
+		StatusCode: statusCode,
+		Message:    errorMessage,
+	}
+	return message, errorResponse
 }
