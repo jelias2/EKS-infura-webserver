@@ -11,6 +11,7 @@ const GetBlockNumber RPCCall = "eth_blockNumber"
 const GetGasPrice RPCCall = "eth_gasPrice"
 const GetBlockByNumber RPCCall = "eth_getBlockByNumber"
 const GetTransactionByBlockNumberAndIndex RPCCall = "eth_getTransactionByBlockNumberAndIndex"
+const GetBlockByNumberRequestBodyTemplate string = `{"jsonrpc":"2.0","method":"eth_getBlockByNumber","params":["%s",%s],"id":1}`
 
 type Healthcheck struct {
 	Status   int    `json:"status"`

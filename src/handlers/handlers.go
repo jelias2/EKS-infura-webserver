@@ -64,36 +64,53 @@ func (h *Handler) GetGasPrice(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetBlockByNumber(w http.ResponseWriter, r *http.Request) {
 
 	var txdetails bool
-	var err error
-
 	w.Header().Set("Content-Type", "application/json")
-	h.Log.Info("Entered GetBlockByNumber")
+	formmattedRequest, validRequest, txdetails := h.ParseGetBlockByNumberRequest(r)
+	if !validRequest {
+		wsError := &apis.ErrorResponse{}
+		json.Unmarshal(formmattedRequest, wsError)
+		json.NewEncoder(w).Encode(wsError)
+		return
+	}
+	if txdetails {
+		json.NewEncoder(w).Encode(h.TxDetailsResponseBoth(formmattedRequest, apis.GetBlockByNumberTxDetailsResponse{}))
+		return
+	} else {
+		json.NewEncoder(w).Encode(h.TxDetailsResponseBoth(formmattedRequest, apis.GetBlockByNumberNoTxDetailsResponse{}))
+	}
+}
+
+/*
+* ParseGetBlockByNumber Request will take in an http request
+* validate that block and txdetails exist and are valid
+* it will then return either an Error message body, or the
+* request body along with the value of txDetails
+ */
+func (h *Handler) ParseGetBlockByNumberRequest(r *http.Request) ([]byte, bool, bool) {
 	reqBody, _ := ioutil.ReadAll(r.Body)
 	var getBlockByNumberRequest apis.GetBlockByNumberRequest
 	if err := json.Unmarshal(reqBody, &getBlockByNumberRequest); err != nil {
 		h.Log.Error("Error unmarshalling GetBlockByNumberRequest", zap.Error(err))
-	}
-
-	txdetails, err = strconv.ParseBool(getBlockByNumberRequest.TxDetails)
-	if getBlockByNumberRequest.Block == "" || err != nil {
-		json.NewEncoder(w).Encode(apis.ErrorResponse{
+		errorBody, _ := json.Marshal(apis.ErrorResponse{
 			StatusCode: 400,
-			Message:    "Malformed Request",
-		})
-		return
+			Message:    err.Error()})
+		return errorBody, false, false
 	}
 
-	//Can't use create RequestBody because 2nd param is bool with no quotes
-	body := fmt.Sprintf(`{"jsonrpc":"2.0","method":"eth_getBlockByNumber","params":["%s",%s],"id":1}`, getBlockByNumberRequest.Block, getBlockByNumberRequest.TxDetails)
-	h.Log.Info("GetBlockByNumber body", zap.String("Body", body))
-	if txdetails {
-		json.NewEncoder(w).Encode(h.TxDetailsResponseBoth(body, apis.GetBlockByNumberTxDetailsResponse{}))
-	} else {
-		json.NewEncoder(w).Encode(h.TxDetailsResponseBoth(body, apis.GetBlockByNumberNoTxDetailsResponse{}))
+	txdetails, err := strconv.ParseBool(getBlockByNumberRequest.TxDetails)
+	if getBlockByNumberRequest.Block == "" || err != nil {
+		errorBody, _ := json.Marshal(apis.ErrorResponse{
+			StatusCode: 400,
+			Message:    "Malformed Request"})
+		return errorBody, false, false
 	}
+	// Can't use create RequestBody because 2nd param is bool with no quotes
+	body := []byte(fmt.Sprintf(apis.GetBlockByNumberRequestBodyTemplate, getBlockByNumberRequest.Block, getBlockByNumberRequest.TxDetails))
+	h.Log.Info("GetBlockByNumber body", zap.String("Body", string(body)))
+	return body, true, txdetails
 }
 
-func (h *Handler) TxDetailsResponseBoth(body string, unmashallStruct interface{}) interface{} {
+func (h *Handler) TxDetailsResponseBoth(body []byte, unmashallStruct interface{}) interface{} {
 	var err error
 	var resp *resty.Response
 

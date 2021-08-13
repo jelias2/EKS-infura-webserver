@@ -2,10 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
-	"io/ioutil"
 	"net/http"
-	"strconv"
 
 	"github.com/gorilla/websocket"
 	"github.com/jelias2/infra-test/src/apis"
@@ -71,33 +68,20 @@ func (h *Handler) WebSocketGetGasPrice(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) WebSocketGetBlockByNumber(w http.ResponseWriter, r *http.Request) {
 
 	var txdetails bool
-	var err error
-
 	w.Header().Set("Content-Type", "application/json")
-	h.Log.Info("Entered WebsocketGetBlockByNumber")
-	reqBody, _ := ioutil.ReadAll(r.Body)
-	var getBlockByNumberRequest apis.GetBlockByNumberRequest
-	if err := json.Unmarshal(reqBody, &getBlockByNumberRequest); err != nil {
-		h.Log.Error("Error unmarshalling GetBlockByNumberRequest", zap.Error(err))
-	}
-
-	txdetails, err = strconv.ParseBool(getBlockByNumberRequest.TxDetails)
-	if getBlockByNumberRequest.Block == "" || err != nil {
-		json.NewEncoder(w).Encode(apis.ErrorResponse{
-			StatusCode: 400,
-			Message:    "Malformed Request",
-		})
+	formmattedRequest, validRequest, txdetails := h.ParseGetBlockByNumberRequest(r)
+	if !validRequest {
+		wsError := &apis.ErrorResponse{}
+		json.Unmarshal(formmattedRequest, wsError)
+		json.NewEncoder(w).Encode(wsError)
 		return
 	}
 
-	// Can't use create RequestBody because 2nd param is bool with no quotes
-	body := []byte(fmt.Sprintf(`{"jsonrpc":"2.0","method":"eth_getBlockByNumber","params":["%s",%s],"id":1}`, getBlockByNumberRequest.Block, getBlockByNumberRequest.TxDetails))
-	h.Log.Info("GetBlockByNumber body", zap.String("Body", string(body)))
-
 	if txdetails {
-		json.NewEncoder(w).Encode(h.WebSocketGetBlockByNumberHandler(body, apis.GetBlockByNumberTxDetailsResponse{}))
+		json.NewEncoder(w).Encode(h.WebSocketGetBlockByNumberHandler(formmattedRequest, apis.GetBlockByNumberTxDetailsResponse{}))
+		return
 	}
-	json.NewEncoder(w).Encode(h.WebSocketGetBlockByNumberHandler(body, apis.GetBlockByNumberNoTxDetailsResponse{}))
+	json.NewEncoder(w).Encode(h.WebSocketGetBlockByNumberHandler(formmattedRequest, apis.GetBlockByNumberNoTxDetailsResponse{}))
 
 }
 
