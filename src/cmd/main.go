@@ -86,6 +86,8 @@ func main() {
 	r.HandleFunc("/ws/blockbynumber", handler.WebSocketGetBlockByNumber).Methods("POST")
 	r.HandleFunc("/ws/txbyblockandindex", handler.WebSocketGetTransactionByBlockNumberAndIndex).Methods("POST")
 
+	r.HandleFunc("/socket2socket", handler.Socket2socket)
+
 	// Start server
 	log.Info("Beginning to server traffic on port")
 	http.ListenAndServe(":8000", r)
