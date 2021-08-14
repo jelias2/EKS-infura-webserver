@@ -60,6 +60,37 @@ func (h *Handler) GetGasPrice(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetBlockByNumber
+func (h *Handler) GetTransactionByBlockNumberAndIndex(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	var resp *resty.Response
+	w.Header().Set("Content-Type", "application/json")
+	h.Log.Info("Entered GetTransactionByBlockNumberAndIndex")
+	reqBody, _ := ioutil.ReadAll(r.Body)
+	var getTxReq apis.GetTransactionByBlockNumberAndIndexRequest
+	if err := json.Unmarshal(reqBody, &getTxReq); err != nil {
+		h.Log.Error("Error unmarshalling GetBlockByNumberRequest", zap.Error(err))
+	}
+
+	if getTxReq.Block == "" || getTxReq.Index == "" {
+		json.NewEncoder(w).Encode(apis.MalformedRequestError)
+		return
+	}
+
+	getBlockNumberAndTxBody := h.CreateRequestBody(apis.GetTransactionByBlockNumberAndIndex, []string{getTxReq.Block, getTxReq.Index})
+	result := &apis.GetTransactionByBlockNumberAndIndexResponse{}
+	resp, err = h.Resty.R().SetBody(getBlockNumberAndTxBody).
+		SetResult(result).
+		Post(h.Mainnet_http_endpoint)
+	if err != nil {
+		h.Log.Error("Error", zap.Error(err))
+	}
+	h.debugResponse("GetTransactionByBlockNumberAndIndex", resp, err)
+	json.NewEncoder(w).Encode(result)
+
+}
+
+// GetBlockByNumber
 func (h *Handler) GetBlockByNumber(w http.ResponseWriter, r *http.Request) {
 
 	var txdetails bool
@@ -73,7 +104,6 @@ func (h *Handler) GetBlockByNumber(w http.ResponseWriter, r *http.Request) {
 	}
 	if txdetails {
 		json.NewEncoder(w).Encode(h.TxDetailsResponse(formmattedRequest, apis.GetBlockByNumberTxDetailsResponse{}))
-		return
 	} else {
 		json.NewEncoder(w).Encode(h.TxDetailsResponse(formmattedRequest, apis.GetBlockByNumberNoTxDetailsResponse{}))
 	}
@@ -86,8 +116,10 @@ func (h *Handler) GetBlockByNumber(w http.ResponseWriter, r *http.Request) {
 * request body along with the value of txDetails
  */
 func (h *Handler) ParseGetBlockByNumberRequest(r *http.Request) ([]byte, bool, bool) {
+
 	reqBody, _ := ioutil.ReadAll(r.Body)
 	var getBlockByNumberRequest apis.GetBlockByNumberRequest
+
 	if err := json.Unmarshal(reqBody, &getBlockByNumberRequest); err != nil {
 		h.Log.Error("Error unmarshalling GetBlockByNumberRequest", zap.Error(err))
 		errorBody, _ := json.Marshal(apis.ErrorResponse{
@@ -131,37 +163,6 @@ func (h *Handler) TxDetailsResponse(body []byte, unmashallStruct interface{}) in
 	}
 }
 
-// GetBlockByNumber
-func (h *Handler) GetTransactionByBlockNumberAndIndex(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-	var resp *resty.Response
-	w.Header().Set("Content-Type", "application/json")
-	h.Log.Info("Entered GetTransactionByBlockNumberAndIndex")
-	reqBody, _ := ioutil.ReadAll(r.Body)
-	var getTxReq apis.GetTransactionByBlockNumberAndIndexRequest
-	if err := json.Unmarshal(reqBody, &getTxReq); err != nil {
-		h.Log.Error("Error unmarshalling GetBlockByNumberRequest", zap.Error(err))
-	}
-
-	if getTxReq.Block == "" || getTxReq.Index == "" {
-		json.NewEncoder(w).Encode(apis.MalformedRequestError)
-		return
-	}
-
-	getBlockNumberAndTxBody := h.CreateRequestBody(apis.GetTransactionByBlockNumberAndIndex, []string{getTxReq.Block, getTxReq.Index})
-	result := &apis.GetTransactionByBlockNumberAndIndexResponse{}
-	resp, err = h.Resty.R().SetBody(getBlockNumberAndTxBody).
-		SetResult(result).
-		Post(h.Mainnet_http_endpoint)
-	if err != nil {
-		h.Log.Error("Error", zap.Error(err))
-	}
-	h.debugResponse("GetTransactionByBlockNumberAndIndex", resp, err)
-	json.NewEncoder(w).Encode(result)
-
-}
-
 func (h *Handler) debugResponse(caller string, resp *resty.Response, err error) {
 	h.Log.Info("Handling response from", zap.String("caller", caller))
 	// Explore response object
@@ -171,7 +172,6 @@ func (h *Handler) debugResponse(caller string, resp *resty.Response, err error) 
 		zap.String("Status     :", resp.Status()),
 		zap.String("Proto      :", resp.Proto()),
 		zap.Time("Received At:", resp.ReceivedAt()))
-	// zap.String("Body :\n", string(resp.Body())))
 }
 
 func (h *Handler) CreateRequestBody(method apis.RPCCall, params []string) *apis.InfuraRequestBody {
