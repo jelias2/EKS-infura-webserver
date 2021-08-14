@@ -37,7 +37,7 @@ func (h *Handler) Healthcheck(w http.ResponseWriter, r *http.Request) {
 // Get ethblock number
 func (h *Handler) GetBlockNumber(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	getBlockBody := createRequestBody(apis.GetBlockNumber, []string{})
+	getBlockBody := h.CreateRequestBody(apis.GetBlockNumber, []string{})
 	result := &apis.GetBlockNumberResponse{}
 	resp, err := h.Resty.R().SetBody(getBlockBody).
 		SetResult(result).
@@ -50,7 +50,7 @@ func (h *Handler) GetBlockNumber(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetGasPrice(w http.ResponseWriter, r *http.Request) {
 
 	h.Log.Info("Entered GetGasPrice")
-	getGasBody := createRequestBody(apis.GetGasPrice, []string{})
+	getGasBody := h.CreateRequestBody(apis.GetGasPrice, []string{})
 	result := &apis.GetGasPriceResponse{}
 	resp, err := h.Resty.R().SetBody(getGasBody).
 		SetResult(result).
@@ -149,7 +149,7 @@ func (h *Handler) GetTransactionByBlockNumberAndIndex(w http.ResponseWriter, r *
 		return
 	}
 
-	getBlockNumberAndTxBody := createRequestBody(apis.GetTransactionByBlockNumberAndIndex, []string{getTxReq.Block, getTxReq.Index})
+	getBlockNumberAndTxBody := h.CreateRequestBody(apis.GetTransactionByBlockNumberAndIndex, []string{getTxReq.Block, getTxReq.Index})
 	result := &apis.GetTransactionByBlockNumberAndIndexResponse{}
 	resp, err = h.Resty.R().SetBody(getBlockNumberAndTxBody).
 		SetResult(result).
@@ -174,7 +174,7 @@ func (h *Handler) debugResponse(caller string, resp *resty.Response, err error) 
 	// zap.String("Body :\n", string(resp.Body())))
 }
 
-func createRequestBody(method apis.RPCCall, params []string) *apis.InfuraRequestBody {
+func (h *Handler) CreateRequestBody(method apis.RPCCall, params []string) *apis.InfuraRequestBody {
 	return &apis.InfuraRequestBody{
 		JsonRPC: apis.RPCVersion2,
 		Method:  method,

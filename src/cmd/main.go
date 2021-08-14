@@ -41,10 +41,18 @@ func main() {
 
 	log.Info("Websocket connecting to", zap.String("Url", mainnetWebsocketEndpoint))
 	ws_client, _, err := websocket.DefaultDialer.Dial(mainnetWebsocketEndpoint, nil)
+	handler := &handlers.Handler{
+		Log:                        log,
+		Resty:                      resty.New(),
+		Mainnet_websocket_endpoint: mainnetWebsocketEndpoint,
+		Mainnet_http_endpoint:      mainnetHTTPEndpoint,
+		WebSocket:                  ws_client,
+	}
+
 	if err != nil {
 		log.Fatal("Fatal Dial Error:", zap.Error(err))
 	}
-	defer ws_client.Close()
+	defer handler.WebSocket.Close()
 
 	go func() {
 		for {
@@ -53,24 +61,15 @@ func main() {
 				log.Info("Websocket Recieved Interrupt, closing channel")
 				// Cleanly close the connection by sending a close message and then
 				// waiting (with timeout) for the server to close the connection.
-				err := ws_client.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+				err := handler.WebSocket.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 				if err != nil {
 					log.Info("Error Closing Socket:", zap.Error(err))
-					return
 				}
 				// Without this ctrl-c will kills the websocket, and leave the webserver hanging
 				os.Exit(1)
 			}
 		}
 	}()
-
-	handler := &handlers.Handler{
-		Log:                        log,
-		Resty:                      resty.New(),
-		Mainnet_websocket_endpoint: mainnetWebsocketEndpoint,
-		Mainnet_http_endpoint:      mainnetHTTPEndpoint,
-		WebSocket:                  ws_client,
-	}
 
 	// Route handles & endpoints
 	r.HandleFunc("/health", handler.Healthcheck).Methods("GET")
