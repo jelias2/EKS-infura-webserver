@@ -101,8 +101,8 @@ func (h *Handler) ParseGetBlockByNumberRequest(r *http.Request) ([]byte, bool, b
 		errorBody, _ := json.Marshal(apis.MalformedRequestError)
 		return errorBody, false, false
 	}
-	// Can't use create RequestBody because 2nd param is bool with no quotes
-	body := []byte(fmt.Sprintf(apis.GetBlockByNumberRequestBodyTemplate, getBlockByNumberRequest.Block, getBlockByNumberRequest.TxDetails))
+
+	body := []byte(fmt.Sprintf(apis.BooleanRequestBodyTemplate, apis.GetBlockByNumber, getBlockByNumberRequest.Block, getBlockByNumberRequest.TxDetails))
 	h.Log.Info("GetBlockByNumber body", zap.String("Body", string(body)))
 	return body, true, txdetails
 }
