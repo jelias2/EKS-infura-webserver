@@ -27,7 +27,6 @@ const requests = [
 	];
 
 export default function () {
-  //let url = ('http://host.docker.internal:8000/socket2socket')
   let url = ('ws://localhost:8000/socket2socket')
   let params = { tags: { my_tag: 'my ws session' } };
 
