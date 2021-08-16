@@ -28,6 +28,7 @@ type Healthcheck struct {
 	Datetime string `json:"datetime"`
 }
 
+//TODO: Refactor to use the same basic response type fot GetGas and GetBlockNumber
 type GetBlockNumberResponse struct {
 	Jsonrpc string `json:"jsonrpc"`
 	Id      int    `json:"id"`

@@ -48,7 +48,7 @@ func (h *Handler) GetBlockNumber(w http.ResponseWriter, r *http.Request) {
 
 // Get GetGasPrice number
 func (h *Handler) GetGasPrice(w http.ResponseWriter, r *http.Request) {
-
+	w.Header().Set("Content-Type", "application/json")
 	h.Log.Info("Entered GetGasPrice")
 	getGasBody := h.CreateRequestBody(apis.GetGasPrice, []string{})
 	result := &apis.GetGasPriceResponse{}
@@ -103,9 +103,9 @@ func (h *Handler) GetBlockByNumber(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if txdetails {
-		json.NewEncoder(w).Encode(h.TxDetailsResponse(formmattedRequest, apis.GetBlockByNumberTxDetailsResponse{}))
+		json.NewEncoder(w).Encode(h.GetBlockByNumberResponse(formmattedRequest, apis.GetBlockByNumberTxDetailsResponse{}))
 	} else {
-		json.NewEncoder(w).Encode(h.TxDetailsResponse(formmattedRequest, apis.GetBlockByNumberNoTxDetailsResponse{}))
+		json.NewEncoder(w).Encode(h.GetBlockByNumberResponse(formmattedRequest, apis.GetBlockByNumberNoTxDetailsResponse{}))
 	}
 }
 
@@ -139,7 +139,7 @@ func (h *Handler) ParseGetBlockByNumberRequest(r *http.Request) ([]byte, bool, b
 	return body, true, txdetails
 }
 
-func (h *Handler) TxDetailsResponse(body []byte, unmashallStruct interface{}) interface{} {
+func (h *Handler) GetBlockByNumberResponse(body []byte, unmashallStruct interface{}) interface{} {
 	var err error
 	var resp *resty.Response
 

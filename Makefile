@@ -17,7 +17,8 @@ binrun:
 
 # Clean all the artifacts in the output path
 clean:
-	@rm -rf $(OUTPUT_PATH)
+	rm -rf $(OUTPUT_PATH)
+	go mod tidy
  
 .PHONY: docker
 docker: 
@@ -29,7 +30,7 @@ docker:
 	--build-arg PROJECT_SECRET_ARG=${PROJECT_SECRET} 
 
 .PHONY: docker-run
-docker-run:
+docker-run: docker
 	docker run -p 8000:8000 -t infura-web-server:latest
 
  
