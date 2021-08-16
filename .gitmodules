@@ -1,0 +1,3 @@
+[submodule "load-tests/k6"]
+	path = load-tests/k6
+	url = https://github.com/k6io/k6
