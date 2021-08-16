@@ -48,7 +48,7 @@ touch ${temp_loadtest_path}
 
 pushd $WORKSPACE > /dev/null 2>&1 
 echo "[run-load-test.sh]: Executing make binrun to run infura webserver"
-make binrun > /dev/null 2>&1 
+make binrun > /dev/null 2>&1 &
 popd > /dev/null 2>&1 
 # Let the server spin up
 sleep 5

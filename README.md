@@ -1,7 +1,20 @@
 # Infura Web Server
-* Welcome to my verion of the take home project
+* Welcome to my verion of the take home project. I've created a webserver written in go to serve infura api data over 3 possible data protocol paths. My inspiration for this came from watching a short infura demo on youtube and listing to the speaker mention a push to websockets [here](https://youtu.be/OPtt2SiQ4qk?t=430). I had never used websockets before, and I thought it would be fun task to loadtest the efficiency of websockets to standard HTTP rest using the following setups.
+  * ```client <-HTTP-> jelias_infura_server <-HTTP-> Infura ```
+  * ```client <-HTTP-> jelias_infura_server <-Websocket-> Infura ```
+  * ```client <-Websocket-> jelias_infura_server <-Websocket-> Infura ```
 
-## How to Run
+# Table of contents
+- [Infura Web Server](#infura-web-server)
+- [Table of contents](#table-of-contents)
+  - [How to Run <a name="howtrun"></a>](#how-to-run-)
+  - [How to Load Test <a name="howtoloadtest"></a>](#how-to-load-test-)
+  - [Repository Setup <a name="repositorysetup"></a>](#repository-setup-)
+  - [Makefile Commands: <a name="makefilecommands"></a>](#makefile-commands-)
+  - [Endpoint Documentation <a name="endpointdocumentation"></a>](#endpoint-documentation-)
+  - [Troubleshooting <a name="troubleshooting"></a>](#troubleshooting-)
+
+## How to Run <a name="howtrun"></a>
 1. In the root directory fill out the .envrc file with some Infura Project Credentials
 ```export PROJECT_ID=<Infura-ProjectID>
 export PROJECT_SECRET=<Infura-Project-Secret>
@@ -18,17 +31,27 @@ export MAINNET_WEBSOCKET_ENDPOINT=<Infura-WS-Endpoint>
 1. Begin using the endpoints via the Endpoint Documentation section below
     * If you are familar with postman you can download and import the postman api collection from `/load-tests/jelias-infura-rest.postman_collection.json```
 
-## How to Load Test
-  * Change directories to the load-testing area
-     * ```cd load-tests```
-  * Spin up Grafana and influx db for visualization
-    * ```docker compose up```
-    * 
-  * For localized load-tests (dockerized or in cloud requires specialized configuration at this time)
-    * ```cd local-load-tests```
-  * 
-    
-## Repository Setup
+## How to Load Test <a name="howtoloadtest"></a>
+  * Fill out and source .envrc
+  * Install k6 package for your machine [k6 installation instructions](https://k6.io/docs/getting-started/installation/)
+  * Sync submodules and init 
+    * ```git submodules sync &&  git submodule update --init --recursive```
+  * Spin up Grafana and influx db for visualization 
+    * ```$WORKSPACE/load-tests/k6 && docker-compose up -d influxdb grafana```
+    * Navigate to localhost:3000 in your browser for the grafana interface
+    * Import via grafana.com: Enter 2587. Click load
+    * TODO add screenshot
+    * On the next page find the k6 dropdown, select "myinfluxdb (default)"
+    * import 
+  * Run localized load-tests (dockerized or in cloud requires indivudal  configuration at this time)
+    * back to local-load-tests ```cd $WORKSPACE/load-tests/local-load-tests```
+  * Load test command execution ```./run-load-test.sh <endpoint>/<test-name> <# of users> <time-duration>```
+  * Example ```./run-load-test.sh gasprice/gasprice-loadtest.js 10 30s```
+  * Example ``` ./run-load-test.sh txbyblockandindex/single-request-body.js 100 30s```
+  * Watch the results over grafana and the k6 output at end of test
+  * Note: socket2socket tests results will not show up in grafana default dashboard as the websocket metrics are different fields than http -rest versions
+
+## Repository Setup <a name="repositorysetup"></a>
   * /src contains all of the source code
   * /cmd contains the main.go which executes setup and initalization of the webserver
   * /handlers: the files which perform the logic for each endpoint
@@ -40,13 +63,16 @@ export MAINNET_WEBSOCKET_ENDPOINT=<Infura-WS-Endpoint>
     * transactions.go structs releating to transaction request and responses
   * /load-tests contains scripts for load-testing: see more info in the load-testing section
   * /build contains build artifacts
-* Makefile Commands:
+
+## Makefile Commands: <a name="makefilecommands"></a>
   * ```make bin``` -> Will build the binary with the artifact sent to /build
   * ```make binrun``` -> Will build a the binary and run it
   * ```make clean``` -> Will remove the build directory and perform a go mod tidy
   * ```make docker``` -> Will build the binary and the dockerized version of the web server
   * ```make docker-run``` -> Will build the binary, make the docker version, and run it on port 8000 in detached mode
-## Endpoint Documentation
+
+
+## Endpoint Documentation <a name="endpointdocumentation"></a>
 * ```GET /health``` 
     * Will return a short message with a timestamp to display that the server is alive and running
     * ```{"status": 202, "message": "Healthcheck response", "datetime": "2021-08-15 19:03:00 607301 -0500 CDT m=+32283.828596254"}```
@@ -72,7 +98,12 @@ export MAINNET_WEBSOCKET_ENDPOINT=<Infura-WS-Endpoint>
     * Example Request: ```{"jsonrpc":"2.0","method":"eth_getTransactionByBlockNumberAndIndex","params": ["0x5BAD55","0x0"],"id":1}```
     * Example Response: TODO
 
-## Load-Testing
- How to run: 
-1. Install k6 package [here](https://k6.io/docs/getting-started/installation/)
-2. suor
+## Troubleshooting <a name="troubleshooting"></a>
+* ```ERRO[0010] Couldn't write stats                          error="{\"error\":\"Request Entity Too Large\"}\n" output=InfluxDBv1``` 
+  * This error occurs when the loadtest data payload is too large for the influx DB. To adjust the payload limit, set the following line to the environment section of the influxdb service. Note this may crash influxdb if the test data is too much 
+```
+environment:
+      - INFLUXDB_DB=k6
+      - INFLUXDB_HTTP_MAX_BODY_SIZE=0 <--- Add this line
+``` 
+in the k6/docker-compose.yaml and restart the service via ```docker compose down &&  docker compose up -d influxdb grafana ```
