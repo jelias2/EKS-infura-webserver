@@ -63,3 +63,4 @@ k6 run --vus ${2} --duration ${3} --out influxdb=http://localhost:8086/k6 ${temp
 # Remove the file
 echo "[run-load-test.sh]: Removing temp loadtest file: ${temp_loadtest_path}"
 rm ${temp_loadtest_path}
+echo "[run-load-test.sh]: Completed."
