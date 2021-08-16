@@ -1,0 +1,260 @@
+{
+	"info": {
+		"_postman_id": "56b6c7e7-c8a3-4645-8db4-f06d22fef145",
+		"name": "Infura Rest",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "HTTP",
+			"item": [
+				{
+					"name": "/blocknumber",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{host}}/blocknumber",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"blocknumber"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "healthcheck",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{host}}/health",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"health"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/gasprice",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{host}}/gasprice",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"gasprice"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/blockbynumber",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"block\": \"latest\",\n    \"txdetails\": false\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/blockbynumber",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"blockbynumber"
+							],
+							"query": [
+								{
+									"key": "block",
+									"value": "latest",
+									"disabled": true
+								},
+								{
+									"key": "tx_details",
+									"value": "true",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/txbyblockandindex",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"block\": \"0xc68e80\",\n    \"index\": \"0x11\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/txbyblockandindex",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"txbyblockandindex"
+							],
+							"query": [
+								{
+									"key": "block",
+									"value": "latest",
+									"disabled": true
+								},
+								{
+									"key": "tx_details",
+									"value": "",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "WebSocket",
+			"item": [
+				{
+					"name": "/ws/gasprice",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{host}}/ws/gasprice",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"ws",
+								"gasprice"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/ws/blocknumber",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{host}}/ws/blockbynumber",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"ws",
+								"blockbynumber"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/ws/blockbynumber",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"block\": \"latest\",\n    \"txdetails\": \"true\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/ws/blockbynumber",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"ws",
+								"blockbynumber"
+							],
+							"query": [
+								{
+									"key": "block",
+									"value": "latest",
+									"disabled": true
+								},
+								{
+									"key": "tx_details",
+									"value": "true",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/ws/txbyblockandindex",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"block\": \"latest\",\n    \"index\": \"0x1F\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}/ws/txbyblockandindex",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"ws",
+								"txbyblockandindex"
+							],
+							"query": [
+								{
+									"key": "block",
+									"value": "latest",
+									"disabled": true
+								},
+								{
+									"key": "tx_details",
+									"value": "",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
