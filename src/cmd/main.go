@@ -9,6 +9,7 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
+	"github.com/jelias2/infra-test/src/apis"
 	"github.com/jelias2/infra-test/src/handlers"
 	"go.uber.org/zap"
 )
@@ -44,34 +45,53 @@ func main() {
 		zap.String("mainnetWebsocketEndpoint", mainnetWebsocketEndpoint),
 	)
 
-	interrupt := make(chan os.Signal, 1) // Channel to listen for interrupt signal to terminate gracefully
-	signal.Notify(interrupt, os.Interrupt)
-
 	log.Info("Websocket connecting to", zap.String("Url", mainnetWebsocketEndpoint))
-	ws_client, _, err := websocket.DefaultDialer.Dial(mainnetWebsocketEndpoint, nil)
+	ws_client1, _, err1 := websocket.DefaultDialer.Dial(mainnetWebsocketEndpoint, nil)
+	ws_client2, _, err2 := websocket.DefaultDialer.Dial(mainnetWebsocketEndpoint, nil)
+	ws_client3, _, err3 := websocket.DefaultDialer.Dial(mainnetWebsocketEndpoint, nil)
+	ws_client4, _, err4 := websocket.DefaultDialer.Dial(mainnetWebsocketEndpoint, nil)
+	if err1 != nil || err2 != nil || err3 != nil || err4 != nil {
+		log.Fatal("Error creating websocket clients")
+	}
+
 	handler := &handlers.Handler{
 		Log:                        log,
 		Resty:                      resty.New(),
 		Mainnet_websocket_endpoint: mainnetWebsocketEndpoint,
 		Mainnet_http_endpoint:      mainnetHTTPEndpoint,
-		WebSocket:                  ws_client,
+		WsClients: map[apis.ClientName]*websocket.Conn{
+			apis.WsBlockNumber:             ws_client1,
+			apis.WsBlockByNumber:           ws_client2,
+			apis.WsGasPrice:                ws_client3,
+			apis.WsTxByBlockNumberAndIndex: ws_client4,
+		},
 	}
 
 	if err != nil {
 		log.Fatal("Fatal Dial Error:", zap.Error(err))
 	}
-	defer handler.WebSocket.Close()
 
+	defer handler.WsClients[apis.WsBlockNumber].Close()
+	defer handler.WsClients[apis.WsBlockByNumber].Close()
+	defer handler.WsClients[apis.WsGasPrice].Close()
+	defer handler.WsClients[apis.WsTxByBlockNumberAndIndex].Close()
+
+	interrupt := make(chan os.Signal, 1) // Channel to listen for interrupt signal to terminate gracefully
+	signal.Notify(interrupt, os.Interrupt)
 	go func() {
 		for {
+			// On system interrupt shut all sockets down
 			sig := <-interrupt
 			if sig != nil {
 				log.Info("Websocket Recieved Interrupt, closing channel")
 				// Cleanly close the connection by sending a close message and then
 				// waiting (with timeout) for the server to close the connection.
-				err := handler.WebSocket.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
-				if err != nil {
-					log.Info("Error Closing Socket:", zap.Error(err))
+				err1 := handler.WsClients[apis.WsBlockNumber].WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+				err2 := handler.WsClients[apis.WsBlockByNumber].WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+				err3 := handler.WsClients[apis.WsGasPrice].WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+				err4 := handler.WsClients[apis.WsTxByBlockNumberAndIndex].WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+				if err1 != nil || err2 != nil || err3 != nil || err4 != nil {
+					log.Fatal("Error creating websocket clients")
 				}
 				// Without this ctrl-c will kills the websocket, and leave the webserver hanging
 				os.Exit(1)

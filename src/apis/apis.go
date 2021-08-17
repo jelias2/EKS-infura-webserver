@@ -1,6 +1,8 @@
 package apis
 
-import "net/http"
+import (
+	"net/http"
+)
 
 // Default Request Fields
 const RPCVersion2 = "2.0"
@@ -14,12 +16,17 @@ const GetGasPrice RPCCall = "eth_gasPrice"
 const GetBlockByNumber RPCCall = "eth_getBlockByNumber"
 const GetLogs RPCCall = "eth_getLogs"
 const GetStorageAt RPCCall = "eth_getStorageAt"
-
 const GetTransactionByBlockNumberAndIndex RPCCall = "eth_getTransactionByBlockNumberAndIndex"
 
-//const GetBlockByNumberRequestBodyTemplate string = `{"jsonrpc":"2.0","method":"eth_getBlockByNumber","params":["%s",%s],"id":1}`
-const BooleanRequestBodyTemplate string = `{"jsonrpc":"2.0","method":"%s","params":["%s",%s],"id":1}`
+// ClientNames for map lookup
+type ClientName string
 
+const WsBlockNumber ClientName = "WsBlockNumber"
+const WsBlockByNumber ClientName = "WsBlockByNumber"
+const WsGasPrice ClientName = "WsGasPrice"
+const WsTxByBlockNumberAndIndex ClientName = "WsTxByBlockNumberAndIndex"
+
+const BooleanRequestBodyTemplate string = `{"jsonrpc":"2.0","method":"%s","params":["%s",%s],"id":1}`
 const MalformedRequestMessage = "Malformed Request"
 
 type Healthcheck struct {

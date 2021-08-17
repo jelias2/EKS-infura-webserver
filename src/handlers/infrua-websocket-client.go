@@ -12,9 +12,9 @@ import (
 
 // WebSocketGetGasPrice
 func (h *Handler) WebSocketGetBlockNumber(w http.ResponseWriter, r *http.Request) {
-
+	w.Header().Set("Content-Type", "application/json")
 	getBlockBody, _ := json.Marshal(h.CreateRequestBody(apis.GetBlockNumber, []string{}))
-	message, ErrorResponse := h.WebSocketWriteAndRead(getBlockBody)
+	message, ErrorResponse := h.WebSocketWriteAndRead(apis.WsBlockNumber, getBlockBody)
 	if ErrorResponse.Message != "" && ErrorResponse.StatusCode != 0 {
 		json.NewEncoder(w).Encode(ErrorResponse)
 		return
@@ -28,7 +28,7 @@ func (h *Handler) WebSocketGetBlockNumber(w http.ResponseWriter, r *http.Request
 func (h *Handler) WebSocketGetGasPrice(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	getBlockBody, _ := json.Marshal(h.CreateRequestBody(apis.GetGasPrice, []string{}))
-	message, ErrorResponse := h.WebSocketWriteAndRead(getBlockBody)
+	message, ErrorResponse := h.WebSocketWriteAndRead(apis.WsGasPrice, getBlockBody)
 	if ErrorResponse.Message != "" && ErrorResponse.StatusCode != 0 {
 		json.NewEncoder(w).Encode(ErrorResponse)
 		return
@@ -61,7 +61,7 @@ func (h *Handler) WebSocketGetBlockByNumber(w http.ResponseWriter, r *http.Reque
 func (h *Handler) WebSocketGetBlockByNumberHandler(body []byte, umarshallStruct interface{}) interface{} {
 	var message []byte
 	var errorResponse apis.ErrorResponse
-	message, errorResponse = h.WebSocketWriteAndRead(body)
+	message, errorResponse = h.WebSocketWriteAndRead(apis.WsBlockByNumber, body)
 	if errorResponse.Message != "" && errorResponse.StatusCode != 0 {
 		return errorResponse
 	}
@@ -98,7 +98,7 @@ func (h *Handler) WebSocketGetTransactionByBlockNumberAndIndex(w http.ResponseWr
 	}
 
 	getBlockTxIndex, _ := json.Marshal(h.CreateRequestBody(apis.GetTransactionByBlockNumberAndIndex, []string{getTxReq.Block, getTxReq.Index}))
-	message, errorResponse := h.WebSocketWriteAndRead(getBlockTxIndex)
+	message, errorResponse := h.WebSocketWriteAndRead(apis.WsTxByBlockNumberAndIndex, getBlockTxIndex)
 	if errorResponse.Message != "" && errorResponse.StatusCode != 0 {
 		json.NewEncoder(w).Encode(errorResponse)
 	}
@@ -109,16 +109,16 @@ func (h *Handler) WebSocketGetTransactionByBlockNumberAndIndex(w http.ResponseWr
 
 }
 
-func (h *Handler) WebSocketWriteAndRead(body []byte) ([]byte, apis.ErrorResponse) {
+func (h *Handler) WebSocketWriteAndRead(caller apis.ClientName, body []byte) ([]byte, apis.ErrorResponse) {
 	errorMessage := ""
 	statusCode := 0
-	err := h.WebSocket.WriteMessage(websocket.TextMessage, body)
+	err := h.WsClients[caller].WriteMessage(websocket.TextMessage, body)
 	if err != nil {
 		h.Log.Info("Error writing WebSocketGetGasPrice websocket message", zap.Error(err))
 		errorMessage = err.Error()
 		statusCode = http.StatusBadRequest
 	}
-	_, message, err := h.WebSocket.ReadMessage()
+	_, message, err := h.WsClients[caller].ReadMessage()
 	if err != nil {
 		h.Log.Info("Error reading WebSocketGetGasPrice websocket message", zap.Error(err))
 		errorMessage = err.Error()

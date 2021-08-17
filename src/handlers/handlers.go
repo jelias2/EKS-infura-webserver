@@ -19,7 +19,7 @@ import (
 type Handler struct {
 	Log                        *zap.Logger
 	Resty                      *resty.Client
-	WebSocket                  *websocket.Conn
+	WsClients                  map[apis.ClientName]*websocket.Conn
 	Mainnet_http_endpoint      string
 	Mainnet_websocket_endpoint string
 }
