@@ -66,7 +66,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"block\": \"latest\",\n    \"txdetails\": false\n}",
+							"raw": "{\n    \"block\": \"latest\",\n    \"txdetails\": \"false\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -164,13 +164,13 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{host}}/ws/blockbynumber",
+							"raw": "{{host}}/ws/blocknumber",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"ws",
-								"blockbynumber"
+								"blocknumber"
 							]
 						}
 					},
@@ -183,7 +183,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"block\": \"latest\",\n    \"txdetails\": \"true\"\n}",
+							"raw": "{\n    \"block\": \"0xc6fc11\",\n    \"txdetails\": \"true\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -222,7 +222,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"block\": \"latest\",\n    \"index\": \"0x1F\"\n}",
+							"raw": "{\n    \"block\": \"0xc6fc11\",\n    \"index\": \"0x1F\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
