@@ -159,6 +159,23 @@
 					"response": []
 				},
 				{
+					"name": "/ws/health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{host}}/health",
+							"host": [
+								"{{host}}"
+							],
+							"path": [
+								"health"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "/ws/blocknumber",
 					"request": {
 						"method": "GET",

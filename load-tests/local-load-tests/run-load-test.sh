@@ -30,10 +30,12 @@ if [ -z "$3" ]; then
     exit
 fi  
 
-## Check for the ws extension
-if [ -z "$4"]; then 
+## Check for the ws extension, update route if nessecary
+endpoint="http://localhost:8000"
+if [ -z "$4" ]; then 
     continue
 elif [ "ws" = "$4" ]; then 
+    endpoint="http://localhost:8000/ws"
     continue
 else
     echo "[run-load-test.sh]: Error invalid websocket parameter provided. Must be ws"
@@ -55,8 +57,7 @@ fi
 echo "[run-load-test.sh]: Using loadtest file: ${1}"
 echo "[run-load-test.sh]: Number of Users: ${2}"
 echo "[run-load-test.sh]: Time duration: ${3}"
-echo "[run-load-test.sh]: HTTP-Websocket Connection: ${4}"
-echo "[run-load-test.sh]: Testing with localhost:8000"
+echo "[run-load-test.sh]: Testing with ${endpoint}"
 
 # Create of temporary file loadtest file to SED
 temp_sed_filename="sed-loadtest.js"
@@ -73,7 +74,7 @@ popd > /dev/null 2>&1
 sleep 5
 
 # Use arg 1 and replace the URL with localhost for binary testing
-sed 's|SED-URL|'http://localhost:8000'|g' ${1} > ${temp_loadtest_path}
+sed 's|SED-URL|'${endpoint}'|g' ${1} > ${temp_loadtest_path}
 
 # Run the test and output to db
 echo "[run-load-test.sh]: Running k6 tool"
