@@ -33,10 +33,10 @@ func main() {
 	log.Info("Creating mux router and initalizing mux router")
 	r := mux.NewRouter()
 
-	projectID := os.Getenv("PROJECT_ID")
-	projectSecret := os.Getenv("PROJECT_SECRET")
-	mainnetHTTPEndpoint := os.Getenv("MAINNET_HTTP_ENDPOINT")
-	mainnetWebsocketEndpoint := os.Getenv("MAINNET_WEBSOCKET_ENDPOINT")
+	projectID = os.Getenv("PROJECT_ID")
+	projectSecret = os.Getenv("PROJECT_SECRET")
+	mainnetHTTPEndpoint = os.Getenv("MAINNET_HTTP_ENDPOINT")
+	mainnetWebsocketEndpoint = os.Getenv("MAINNET_WEBSOCKET_ENDPOINT")
 
 	log.Info("Config vars",
 		zap.String("Project_id", projectID),
@@ -45,13 +45,14 @@ func main() {
 		zap.String("mainnetWebsocketEndpoint", mainnetWebsocketEndpoint),
 	)
 
-	log.Info("Websocket connecting to", zap.String("Url", mainnetWebsocketEndpoint))
-	ws_client1, _, err1 := websocket.DefaultDialer.Dial(mainnetWebsocketEndpoint, nil)
-	ws_client2, _, err2 := websocket.DefaultDialer.Dial(mainnetWebsocketEndpoint, nil)
-	ws_client3, _, err3 := websocket.DefaultDialer.Dial(mainnetWebsocketEndpoint, nil)
-	ws_client4, _, err4 := websocket.DefaultDialer.Dial(mainnetWebsocketEndpoint, nil)
-	if err1 != nil || err2 != nil || err3 != nil || err4 != nil {
-		log.Fatal("Error creating websocket clients")
+	log.Info("Creating websockets for endpoint connecting to", zap.String("Url", mainnetWebsocketEndpoint))
+	var wsClients = make(map[apis.ClientName]*websocket.Conn)
+	for _, endpoint := range apis.AllWsClients {
+		ws_client, _, err := websocket.DefaultDialer.Dial(mainnetWebsocketEndpoint, nil)
+		if err != nil {
+			log.Fatal("Error creating websocket clients")
+		}
+		wsClients[endpoint] = ws_client
 	}
 
 	handler := &handlers.Handler{
@@ -59,16 +60,7 @@ func main() {
 		Resty:                      resty.New(),
 		Mainnet_websocket_endpoint: mainnetWebsocketEndpoint,
 		Mainnet_http_endpoint:      mainnetHTTPEndpoint,
-		WsClients: map[apis.ClientName]*websocket.Conn{
-			apis.WsBlockNumber:             ws_client1,
-			apis.WsBlockByNumber:           ws_client2,
-			apis.WsGasPrice:                ws_client3,
-			apis.WsTxByBlockNumberAndIndex: ws_client4,
-		},
-	}
-
-	if err != nil {
-		log.Fatal("Fatal Dial Error:", zap.Error(err))
+		WsClients:                  wsClients,
 	}
 
 	defer handler.WsClients[apis.WsBlockNumber].Close()
@@ -86,12 +78,11 @@ func main() {
 				log.Info("Websocket Recieved Interrupt, closing channel")
 				// Cleanly close the connection by sending a close message and then
 				// waiting (with timeout) for the server to close the connection.
-				err1 := handler.WsClients[apis.WsBlockNumber].WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
-				err2 := handler.WsClients[apis.WsBlockByNumber].WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
-				err3 := handler.WsClients[apis.WsGasPrice].WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
-				err4 := handler.WsClients[apis.WsTxByBlockNumberAndIndex].WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
-				if err1 != nil || err2 != nil || err3 != nil || err4 != nil {
-					log.Fatal("Error creating websocket clients")
+				for _, endpoint := range apis.AllWsClients {
+					handler.WsClients[endpoint].WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+					if err != nil {
+						log.Fatal("Error Closing Websocket", zap.String("Websocket", string(endpoint)), zap.Error(err))
+					}
 				}
 				// Without this ctrl-c will kills the websocket, and leave the webserver hanging
 				os.Exit(1)
@@ -118,5 +109,5 @@ func main() {
 
 	// Start server
 	log.Info("Beginning to server traffic on port")
-	http.ListenAndServe(":8000", r)
+	log.Fatal("Error Serving traffic ", zap.Error(http.ListenAndServe(":8000", r)))
 }

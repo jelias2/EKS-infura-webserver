@@ -8,11 +8,12 @@
 - [Infura Web Server](#infura-web-server)
 - [Table of contents](#table-of-contents)
   - [How to Run <a name="howtrun"></a>](#how-to-run-)
-  - [How to Load Test <a name="howtoloadtest"></a>](#how-to-load-test-)
+  - [How to Load Test Locally <a name="howtoloadtest"></a>](#how-to-load-test-)
   - [Repository Setup <a name="repositorysetup"></a>](#repository-setup-)
   - [Makefile Commands: <a name="makefilecommands"></a>](#makefile-commands-)
   - [Endpoint Documentation <a name="endpointdocumentation"></a>](#endpoint-documentation-)
   - [Troubleshooting <a name="troubleshooting"></a>](#troubleshooting-)
+  - [Finale: Cranking Up the Loadtests <a name="crankload"></a>](#crankload-)
 
 ## How to Run <a name="howtrun"></a>
 1. In the root directory fill out the .envrc file with some Infura Project Credentials
@@ -55,7 +56,8 @@ export MAINNET_WEBSOCKET_ENDPOINT=<Infura-WS-Endpoint>
   * /src contains all of the source code
   * /cmd contains the main.go which executes setup and initalization of the webserver
   * /handlers: the files which perform the logic for each endpoint
-    * handlers.go: contains the HTTP REST endpoints and logic
+    * handlers.go: contains the pure HTTP REST endpoints and logic
+    * infura-websocket-client.go: Contains the hybrid HTTP REST Websocket endpoints and logic
     * socket2socket.go: contains a websocket implementation server
   * /apis
     * apis.go contains the basic kinds and json mashalling structure for the webserver
@@ -63,6 +65,7 @@ export MAINNET_WEBSOCKET_ENDPOINT=<Infura-WS-Endpoint>
     * transactions.go structs releating to transaction request and responses
   * /load-tests contains scripts for load-testing: see more info in the load-testing section
   * /build contains build artifacts
+  * /deploy contains k8s deployment code
 
 ## Makefile Commands: <a name="makefilecommands"></a>
   * ```make bin``` -> Will build the binary with the artifact sent to /build
@@ -70,6 +73,7 @@ export MAINNET_WEBSOCKET_ENDPOINT=<Infura-WS-Endpoint>
   * ```make clean``` -> Will remove the build directory and perform a go mod tidy
   * ```make docker``` -> Will build the binary and the dockerized version of the web server
   * ```make docker-run``` -> Will build the binary, make the docker version, and run it on port 8000 in detached mode
+  * ```make dockerk8s``` -> Will build the binary, make the docker version but without the environment variables due to injection via k8s secret
 
 
 ## Endpoint Documentation <a name="endpointdocumentation"></a>
@@ -98,6 +102,10 @@ export MAINNET_WEBSOCKET_ENDPOINT=<Infura-WS-Endpoint>
     * Example Response:  TODO
     * Example Request: ```{"jsonrpc":"2.0","method":"eth_getTransactionByBlockNumberAndIndex","params": ["0x5BAD55","0x0"],"id":1}```
     * Example Response: TODO
+
+## Finale: Cranking Up the Loadtests <a name="crankload"></a>]
+* My Loadtest proceedure was as follows
+
 
 ## Troubleshooting <a name="troubleshooting"></a>
 * ```ERRO[0010] Couldn't write stats                          error="{\"error\":\"Request Entity Too Large\"}\n" output=InfluxDBv1``` 

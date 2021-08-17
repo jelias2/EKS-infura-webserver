@@ -58,10 +58,10 @@ spec:
 ---
 apiVersion: v1
 stringData:
-  project_id: "d8baf352491c4e448f9a33feca6c457a"
-  project_secret: "1ac67dd7b4c9489793b115872f5e0b01"
-  mainnet_http_endpoint: "https://mainnet.infura.io/v3/d8baf352491c4e448f9a33feca6c457a"
-  mainnet_websocket_endpoint: "wss://mainnet.infura.io/ws/v3/d8baf352491c4e448f9a33feca6c457a"
+  project_id: ""
+  project_secret: ""
+  mainnet_http_endpoint: ""
+  mainnet_websocket_endpoint: ""
 kind: Secret
 metadata:
   name: infura-secret

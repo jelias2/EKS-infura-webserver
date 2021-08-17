@@ -26,6 +26,8 @@ const WsBlockByNumber ClientName = "WsBlockByNumber"
 const WsGasPrice ClientName = "WsGasPrice"
 const WsTxByBlockNumberAndIndex ClientName = "WsTxByBlockNumberAndIndex"
 
+var AllWsClients = []ClientName{WsBlockNumber, WsBlockByNumber, WsGasPrice, WsTxByBlockNumberAndIndex}
+
 const BooleanRequestBodyTemplate string = `{"jsonrpc":"2.0","method":"%s","params":["%s",%s],"id":1}`
 const MalformedRequestMessage = "Malformed Request"
 
