@@ -108,6 +108,7 @@ func main() {
 	r.HandleFunc("/blockbynumber", handler.GetBlockByNumber).Methods("POST")
 	r.HandleFunc("/txbyblockandindex", handler.GetTransactionByBlockNumberAndIndex).Methods("POST")
 
+	r.HandleFunc("/ws/health", handler.Healthcheck).Methods("GET")
 	r.HandleFunc("/ws/blocknumber", handler.WebSocketGetBlockNumber).Methods("GET")
 	r.HandleFunc("/ws/gasprice", handler.WebSocketGetGasPrice).Methods("GET")
 	r.HandleFunc("/ws/blockbynumber", handler.WebSocketGetBlockByNumber).Methods("POST")
