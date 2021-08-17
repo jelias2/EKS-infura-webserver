@@ -1,0 +1,82 @@
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: infura
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: infura-webserver-deployment
+  namespace: infura
+  labels:
+    app: infura
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: infura-webserver
+  template:
+    metadata:
+      labels:
+        app: infura-webserver
+    spec:
+      containers:
+      - name: infura-web-server
+        image: infura-web-server:latest
+        imagePullPolicy: Never
+        resources:
+          requests:
+            memory: "250Mi"
+            cpu: ".5"
+        ports:
+        - containerPort: 8000
+        env:
+        - name: PROJECT_ID
+          valueFrom:
+            secretKeyRef:
+              name: infura-secret
+              key: project_id
+        - name: PROJECT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: infura-secret
+              key: project_secret
+        - name: MAINNET_HTTP_ENDPOINT
+          valueFrom:
+            secretKeyRef:
+              name: infura-secret
+              key: mainnet_http_endpoint
+        - name: MAINNET_WEBSOCKET_ENDPOINT
+          valueFrom:
+            secretKeyRef:
+              name: infura-secret
+              key: mainnet_websocket_endpoint
+      volumes:
+      - name: infura-secret-volume
+        secret:
+          secretName: infura-secret
+---
+apiVersion: v1
+stringData:
+  project_id: "d8baf352491c4e448f9a33feca6c457a"
+  project_secret: "1ac67dd7b4c9489793b115872f5e0b01"
+  mainnet_http_endpoint: "https://mainnet.infura.io/v3/d8baf352491c4e448f9a33feca6c457a"
+  mainnet_websocket_endpoint: "wss://mainnet.infura.io/ws/v3/d8baf352491c4e448f9a33feca6c457a"
+kind: Secret
+metadata:
+  name: infura-secret
+  namespace: infura
+type: Opaque
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: infura-webserver-loadbalancer
+  namespace: infura
+spec:
+  selector:
+    app: infura-webserver
+  ports:
+    - port: 8000
+      targetPort: 8000
+  type: LoadBalancer

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"net/http"
 	"os"
 	"os/signal"
@@ -12,11 +13,18 @@ import (
 	"go.uber.org/zap"
 )
 
-//TODO:  Make all logs consistent format!!!
+var (
+	projectID                string
+	projectSecret            string
+	mainnetHTTPEndpoint      string
+	mainnetWebsocketEndpoint string
+	err                      error
+)
 
 // Main function
+//TODO:  Make all logs consistent format!!!
 func main() {
-
+	flag.Parse()
 	log, _ := zap.NewProduction()
 	defer log.Sync()
 	log.Info("Beginning Webserver main.go...")

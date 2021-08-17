@@ -29,9 +29,13 @@ docker:
 	--build-arg MAINNET_WEBSOCKET_ENDPOINT_ARG=${MAINNET_WEBSOCKET_ENDPOINT} \
 	--build-arg PROJECT_SECRET_ARG=${PROJECT_SECRET} 
 
+.PHONY: dockerk8
+dockerk8: 
+	cd $(SRC_PATH) && CGO_ENABLED=0 GOOS=linux go build -ldflags "-s" -a -installsuffix cgo -o $(BUILD_OUTPUT)/infura-server-bin-linux
+	docker build -t infura-web-server . 
+
 .PHONY: docker-run
 docker-run: docker
 	docker run -p 8000:8000 -t infura-web-server:latest
 
- 
  

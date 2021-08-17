@@ -1,5 +1,5 @@
 # Infura Web Server
-* Welcome to my verion of the take home project. I've created a webserver written in go to serve infura api data over 3 possible data protocol paths. My inspiration for this came from watching a short infura demo on youtube and listing to the speaker mention a push to websockets [here](https://youtu.be/OPtt2SiQ4qk?t=430). I had never used websockets before, and I thought it would be fun task to loadtest the efficiency of websockets to standard HTTP rest using the following setups.
+* Welcome to my verion of the take home project. I've created a webserver written in go to serve Infura api data over 3 possible data protocol paths. My inspiration for this came from watching a short infura demo on youtube and listing to the speaker mention a push to websockets [here](https://youtu.be/OPtt2SiQ4qk?t=430). I had never used websockets before, and I thought it would be fun task to loadtest the efficiency of websockets to standard HTTP rest using the following setups.
   * ```client <-HTTP-> jelias_infura_server <-HTTP-> Infura ```
   * ```client <-HTTP-> jelias_infura_server <-Websocket-> Infura ```
   * ```client <-Websocket-> jelias_infura_server <-Websocket-> Infura ```
