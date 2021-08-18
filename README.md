@@ -164,7 +164,11 @@ environment:
       - INFLUXDB_DB=k6
       - INFLUXDB_HTTP_MAX_BODY_SIZE=0 <--- Add this line
 ``` 
-in the k6/docker-compose.yaml and restart the service via ```docker compose down &&  docker compose up -d influxdb grafana ```
+in the k6/docker-compose.yaml and restart the service via ```docker compose down &&  docker compose up -d influxdb grafana```
+
+  *  Load testing error``` ERRO[0069] dial tcp 18.190.129.128:8000: socket: too many open files ```
+    * This occurs when your machine has hit its limit maxmimum connection determine by ulimit -n
+    * It can be overridden with the ulimit command it a user limit
 
 
 ## What I learned <a name="whatilearned"></a>
