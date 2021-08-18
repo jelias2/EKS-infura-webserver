@@ -5,9 +5,14 @@ import { check, sleep } from 'k6';
 let sessionDuration = 30000 // user session between 30s
 
 export let options = {
-  vus: 10,
-  iterations: 10, 
-  duration: '30s',
+  stages: [
+    { duration: "10s", target: 10 },
+    { duration: "30s", target: 200 },
+    { duration: "2m", target: 500 },
+    { duration: "1m", target: 200 },
+    { duration: "10s", target: 50 },
+    { duration: "10s", target: 10 },
+   ],
 };
 
 const requests = [
@@ -26,8 +31,11 @@ const requests = [
 	`{"jsonrpc":"2.0","method":"eth_GasPrice","params": [fakestuff],"id":1}`,
 	];
 
-export default function () {
-  let url = ('ws://localhost:8000/socket2socket')
+
+
+  let url="SED-URL"
+  export default function () {
+  url+="/socket2socket"
   let params = { tags: { my_tag: 'my ws session' } };
 
   let res = ws.connect(url, params, function (socket) {
