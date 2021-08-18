@@ -8,8 +8,9 @@ export let options = {
 let url = "SED-URL"
 
 export default function () {
-  var formData = `{"block": "latest","txdetails": false}`;
-  var headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+  var formData = `{"block": "latest","txdetails": "false"}`;
+  var headers = { 'Content-Type': 'application/json' };
   http.post(url+='/blockbynumber', formData, { headers: headers });
+  sleep(1);
 }
 

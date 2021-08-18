@@ -17,21 +17,29 @@
   - [Finale: Cranking Up the Loadtests <a name="crankload"></a>](#crankload-)
 
 ## How to Run <a name="howtrun"></a>
-1. In the root directory fill out the .envrc file with some Infura Project Credentials
-```export PROJECT_ID=<Infura-ProjectID>
-export PROJECT_SECRET=<Infura-Project-Secret>
-export MAINNET_HTTP_ENDPOINT=<Infura HTTP Endpoint>
-export MAINNET_WEBSOCKET_ENDPOINT=<Infura-WS-Endpoint>
-```
-1. Source the .envrc file 
-    * ```$ source .envrc```
-1. Make the docker image
-    * ```make docker```
-1. Deploy the webserver locally via docker or via binary 
-    * ```make docker-run``` -> via docker on localhost:8000
-    * ```make binrun``` -> run plain binary localhost:8000
-1. Begin using the endpoints via the Endpoint Documentation section below
-    * If you are familar with postman you can download and import the postman api collection from `/load-tests/jelias-infura-rest.postman_collection.json```
+  #### Locally 
+  1. In the root directory fill out the .envrc file with some Infura Project Credentials
+    ```export PROJECT_ID=<Infura-ProjectID>
+    export PROJECT_SECRET=<Infura-Project-Secret>
+    export MAINNET_HTTP_ENDPOINT=<Infura HTTP Endpoint>
+    export MAINNET_WEBSOCKET_ENDPOINT=<Infura-WS-Endpoint>
+    ```
+  1. Source the .envrc file 
+      * ```$ source .envrc```
+  1. Make the docker image
+      * ```make docker```
+  1. Deploy the webserver locally via docker or via binary 
+      * ```make docker-run``` -> via docker on localhost:8000
+      * ```make binrun``` -> run plain binary localhost:8000
+  1. Begin using the endpoints via the Endpoint Documentation section below
+      * If you are familar with postman you can download and import the postman api collection from `/load-tests/jelias-infura-rest.postman_collection.json```
+  #### Cloud Context
+  1. Follow the steps to configure aws and EKS with terraform https://learn.hashicorp.com/tutorials/terraform/eks
+  1. Build and push the image to ECR: https://www.stacksimplify.com/aws-eks/aws-ecr-eks/learn-to-use-docker-images-built-and-pushed-to-aws-ecr-and-use-in-aws-eks/
+  1. Edit the k8s secret in the deployment.yaml with the appropriate values
+  1. kubectl apply deployment.yaml
+  1. Get the service endpoint by examining the external IP in the output of ```kubectl get service -n infura infura-webserver-loadbalancer```
+
 
 ## How to Load Test <a name="howtoloadtest"></a>
   * Fill out and source .envrc
