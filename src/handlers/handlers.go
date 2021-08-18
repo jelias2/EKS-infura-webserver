@@ -27,6 +27,7 @@ type Handler struct {
 // Healthcheck will display test response to make sure the server is running
 func (h *Handler) Healthcheck(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	h.Log.Info("Entered Healthcheck")
 	json.NewEncoder(w).Encode(apis.Healthcheck{
 		Status:   http.StatusAccepted,
 		Message:  "Healthcheck response",
@@ -42,7 +43,7 @@ func (h *Handler) GetBlockNumber(w http.ResponseWriter, r *http.Request) {
 	resp, err := h.Resty.R().SetBody(getBlockBody).
 		SetResult(result).
 		Post(h.Mainnet_http_endpoint)
-	h.debugResponse("GetBlockNumber", resp, err)
+	h.DebugResponse("GetBlockNumber", resp, err)
 	json.NewEncoder(w).Encode(result)
 }
 
@@ -55,7 +56,7 @@ func (h *Handler) GetGasPrice(w http.ResponseWriter, r *http.Request) {
 	resp, err := h.Resty.R().SetBody(getGasBody).
 		SetResult(result).
 		Post(h.Mainnet_http_endpoint)
-	h.debugResponse("GetBlockNumber", resp, err)
+	h.DebugResponse("GetBlockNumber", resp, err)
 	json.NewEncoder(w).Encode(result)
 }
 
@@ -85,7 +86,7 @@ func (h *Handler) GetTransactionByBlockNumberAndIndex(w http.ResponseWriter, r *
 	if err != nil {
 		h.Log.Error("Error", zap.Error(err))
 	}
-	h.debugResponse("GetTransactionByBlockNumberAndIndex", resp, err)
+	h.DebugResponse("GetTransactionByBlockNumberAndIndex", resp, err)
 	json.NewEncoder(w).Encode(result)
 
 }
@@ -148,7 +149,7 @@ func (h *Handler) GetBlockByNumberResponse(body []byte, unmashallStruct interfac
 	if err != nil {
 		h.Log.Error("Error", zap.Error(err))
 	}
-	h.debugResponse("GetBlockByNumber", resp, err)
+	h.DebugResponse("GetBlockByNumber", resp, err)
 	switch unmashallStruct.(type) {
 	case apis.GetBlockByNumberTxDetailsResponse:
 		result := &apis.GetBlockByNumberTxDetailsResponse{}
@@ -163,7 +164,7 @@ func (h *Handler) GetBlockByNumberResponse(body []byte, unmashallStruct interfac
 	}
 }
 
-func (h *Handler) debugResponse(caller string, resp *resty.Response, err error) {
+func (h *Handler) DebugResponse(caller string, resp *resty.Response, err error) {
 	h.Log.Info("Handling response from", zap.String("caller", caller))
 	// Explore response object
 	h.Log.Info("Response Info:",

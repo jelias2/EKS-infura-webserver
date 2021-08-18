@@ -21,6 +21,7 @@ func (h *Handler) WebSocketGetBlockNumber(w http.ResponseWriter, r *http.Request
 	}
 	wsGetBlockNumberResponse := &apis.GetBlockNumberResponse{}
 	json.Unmarshal(message, wsGetBlockNumberResponse)
+	h.Log.Info("WebSocketGetBlockNumber Response", zap.Any("Response", wsGetBlockNumberResponse))
 	json.NewEncoder(w).Encode(wsGetBlockNumberResponse)
 }
 
@@ -35,6 +36,7 @@ func (h *Handler) WebSocketGetGasPrice(w http.ResponseWriter, r *http.Request) {
 	}
 	wsGetGasResponse := &apis.GetGasPriceResponse{}
 	json.Unmarshal(message, wsGetGasResponse)
+	h.Log.Info("WebSocketGetGasPrice Response", zap.Any("Response", wsGetGasResponse))
 	json.NewEncoder(w).Encode(wsGetGasResponse)
 }
 
@@ -71,10 +73,12 @@ func (h *Handler) WebSocketGetBlockByNumberHandler(body []byte, umarshallStruct 
 	case apis.GetBlockByNumberTxDetailsResponse:
 		wsResult := &apis.GetBlockByNumberTxDetailsResponse{}
 		json.Unmarshal(message, wsResult)
+		h.Log.Info("WebSocketGetBlockByNumber Response", zap.Any("Response", wsResult))
 		return wsResult
 	case apis.GetBlockByNumberNoTxDetailsResponse:
 		wsResult := &apis.GetBlockByNumberNoTxDetailsResponse{}
 		json.Unmarshal(message, wsResult)
+		h.Log.Info("WebSocketGetBlockByNumber Response", zap.Any("Response", wsResult))
 		return wsResult
 	default:
 		h.Log.Error("Improper Type")
@@ -105,6 +109,7 @@ func (h *Handler) WebSocketGetTransactionByBlockNumberAndIndex(w http.ResponseWr
 
 	wsGetTxByBlockAndIndexResp := &apis.GetTransactionByBlockNumberAndIndexResponse{}
 	json.Unmarshal(message, wsGetTxByBlockAndIndexResp)
+	h.Log.Info("WebSocketGetTransactionByBlockNumberAndIndex Response", zap.Any("Response", wsGetTxByBlockAndIndexResp))
 	json.NewEncoder(w).Encode(wsGetTxByBlockAndIndexResp)
 
 }

@@ -3,21 +3,21 @@ import { check, sleep } from "k6";
 
 export let options = {
   stages: [
-    { duration: "10s", target: 10 },
-    { duration: "30s", target: 200 },
-    { duration: "2m", target: 500 },
-    { duration: "1m", target: 200 },
-    { duration: "10s", target: 50 },
-    { duration: "10s", target: 10 },
-//
 //    { duration: "10s", target: 10 },
-//    { duration: "30s", target: 100 },
+//    { duration: "30s", target: 200 },
+//    { duration: "2m", target: 500 },
+//    { duration: "1m", target: 200 },
 //    { duration: "10s", target: 50 },
 //    { duration: "10s", target: 10 },
-//
+
+    { duration: "10s", target: 10 },
+    { duration: "30s", target: 20 },
+    { duration: "10s", target: 20 },
+    { duration: "10s", target: 10 },
+
   ],
 }
-let url = "http://a68db72516d7f4c8ba06db566ce9604c-631413878.us-east-2.elb.amazonaws.com:8000/blocknumber"
+let url = "http://ada22e80555734f068d24df886149515-237930780.us-east-2.elb.amazonaws.com:8000/ws/blocknumber"
 
 export default function () {
   	//var formData = `{"block": "latest","txdetails": "false"}`;
