@@ -22,14 +22,11 @@ var (
 	err                      error
 )
 
-// Main function
-//TODO:  Make all logs consistent format!!!
 func main() {
 	flag.Parse()
 	log, _ := zap.NewProduction()
 	defer log.Sync()
 	log.Info("Beginning Webserver main.go...")
-	// Init router
 	log.Info("Creating mux router and initalizing mux router")
 	r := mux.NewRouter()
 

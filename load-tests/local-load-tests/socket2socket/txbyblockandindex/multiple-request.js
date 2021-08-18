@@ -5,9 +5,14 @@ import { check, sleep } from 'k6';
 let sessionDuration = 30000 // user session between 30s
 
 export let options = {
-  vus: 10,
-  iterations: 10, 
-  duration: '30s',
+  stages: [
+    { duration: "10s", target: 10 },
+    { duration: "30s", target: 200 },
+    { duration: "2m", target: 500 },
+    { duration: "1m", target: 200 },
+    { duration: "10s", target: 50 },
+    { duration: "10s", target: 10 },
+   ],
 };
 
 const requests = [
@@ -38,22 +43,9 @@ export default function () {
       console.log(`VU ${__VU}: connected`);
 
       var request = requests[Math.floor(Math.random()*requests.length)];
-      socket.setInterval(function timeout() {		
-          socket.send(request);
-      });
+      socket.send(request);
 
     });
-
-    socket.setTimeout(function () {
-      console.log(`VU ${__VU}: ${sessionDuration}ms passed, leaving the chat`);
-      socket.send(JSON.stringify({'event': 'LEAVE'}));
-
-    }, sessionDuration-3000);
-
-    socket.setTimeout(function () {
-      console.log(`Closing the socket forcefully 3s after graceful LEAVE`);
-      socket.close();
-    }, sessionDuration);
   });
 
   check(res, { 'Connected successfully': (r) => r && r.status === 101 });
