@@ -7,8 +7,6 @@ ENDPOINT="http://localhost:8000"
 LOCAL_LOAD_CONFIG="$WORKSPACE/load-tests/load-test-configuration/local-load-config.json"
 REMOTE_LOAD_CONFIG="$WORKSPACE/load-tests/load-test-configuration/remote-load-config.json"
 
-# ENABLE influx db output
-# INFLUX_DB=true
 
 echo "[run-load-test.sh]: Beginning run-load-test.sh"
 if [ -z "$WORKSPACE" ]; then

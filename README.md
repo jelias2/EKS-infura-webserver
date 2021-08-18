@@ -9,12 +9,18 @@
 - [Infura Web Server](#infura-web-server)
 - [Table of contents](#table-of-contents)
   - [How to Run <a name="howtrun"></a>](#how-to-run-)
-  - [How to Load Test Locally <a name="howtoloadtest"></a>](#how-to-load-test-)
+      - [Locally](#locally)
+      - [Cloud Context](#cloud-context)
+  - [How to Load Test <a name="howtoloadtest"></a>](#how-to-load-test-)
+      - [Setup and Running script](#setup-and-running-script)
+      - [Visualization](#visualization)
+        - [Load testing a remote server](#load-testing-a-remote-server)
   - [Repository Setup <a name="repositorysetup"></a>](#repository-setup-)
   - [Makefile Commands: <a name="makefilecommands"></a>](#makefile-commands-)
   - [Endpoint Documentation <a name="endpointdocumentation"></a>](#endpoint-documentation-)
+  - [Finale: Cranking Up the Loadtests <a name="crankload"></a>]](#finale-cranking-up-the-loadtests-)
   - [Troubleshooting <a name="troubleshooting"></a>](#troubleshooting-)
-  - [Finale: Cranking Up the Loadtests <a name="crankload"></a>](#crankload-)
+  - [What I learned <a name="whatilearned"></a>](#what-i-learned-)
 
 ## How to Run <a name="howtrun"></a>
   #### Locally 
@@ -42,24 +48,31 @@
 
 
 ## How to Load Test <a name="howtoloadtest"></a>
+#### Setup and Running script
   * Fill out and source .envrc
+  * Run localized load-tests oad test command execution ```./run-load-test.sh <endpoint>/<test-name> <ws>```
+    * Example ```./run-load-test.sh endpoints/gasprice/gasprice-loadtest.js```
+    * Example ``` ./run-load-test.sh endpoints/txbyblockandindex/single-request-body.js ws```
+  * The test load can be configurate by editing the configuration files within ```load-test-configuration```
+  * local-load-config.json will be executed against local instances of the server
+  * remote-load-config.json will be executed against the LOAD_TEST_ENDPOINT
+#### Visualization 
   * Install k6 package for your machine [k6 installation instructions](https://k6.io/docs/getting-started/installation/)
   * Sync submodules and init 
-    * ```git submodules sync &&  git submodule update --init --recursive```
-  * Spin up Grafana and influx db for visualization 
-    * ```$WORKSPACE/load-tests/k6 && docker-compose up -d influxdb grafana```
-    * Navigate to localhost:3000 in your browser for the grafana interface
-    * Import via grafana.com: Enter 2587. Click load
-    * TODO add screenshot
-    * On the next page find the k6 dropdown, select "myinfluxdb (default)"
-    * import 
-  * Run localized load-tests (dockerized or in cloud requires indivudal  configuration at this time)
-    * back to local-load-tests ```cd $WORKSPACE/load-tests/local-load-tests```
-  * Load test command execution ```./run-load-test.sh <endpoint>/<test-name> <# of users> <time-duration>```
-  * Example ```./run-load-test.sh gasprice/gasprice-loadtest.js 10 30s```
-  * Example ``` ./run-load-test.sh txbyblockandindex/single-request-body.js 100 30s```
+  * ```git submodules sync &&  git submodule update --init --recursive```
+  * (Optional ) Spin up Grafana and influx db for visualization 
+  * ```$WORKSPACE/load-tests/k6 && docker-compose up -d influxdb grafana```
+  * Navigate to localhost:3000 in your browser for the grafana interface
+  * Import via grafana.com: Enter 2587. Click load
+  * TODO add screenshot
+  * On the next page find the k6 dropdown, select "myinfluxdb (default)"
+  * import 
+
   * Watch the results over grafana and the k6 output at end of test
   * Note: socket2socket tests results will not show up in grafana default dashboard as the websocket metrics are different fields than http -rest versions
+##### Load testing a remote server
+  * Set the environment variable ```LOAD_TEST_ENDPOINT`` either in the .envrc or commandline
+  * 
 
 ## Repository Setup <a name="repositorysetup"></a>
   * /src contains all of the source code
