@@ -1,19 +1,5 @@
-import { randomString, randomIntBetween } from "https://jslib.k6.io/k6-utils/1.1.0/index.js";
 import ws from 'k6/ws';
-import { check, sleep } from 'k6';
-
-let sessionDuration = 30000 // user session between 30s
-
-export let options = {
-  stages: [
-    { duration: "10s", target: 10 },
-    { duration: "30s", target: 200 },
-    { duration: "2m", target: 500 },
-    { duration: "1m", target: 200 },
-    { duration: "10s", target: 50 },
-    { duration: "10s", target: 10 },
-   ],
-};
+import { check } from 'k6';
 
 const requests = [
 	`{"jsonrpc":"2.0","method":"eth_getTransactionByBlockNumberAndIndex","params": ["0xc68e80","0x11"],"id":1}`,

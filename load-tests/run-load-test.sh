@@ -1,15 +1,11 @@
 #!/bin/bash
 
-
 ## Basic default ENDPOINT
 ENDPOINT="http://localhost:8000"
 
 ## Path to user config file
-LOCAL_LOAD_CONFIG="$WORKSPACE/load-tests/local-load-config.json"
-REMOTE_LOAD_CONFIG="$WORKSPACE/load-tests/remote-load-config.json"
-
-# EXECUTED_CONFIG will be set by the script, leave it empty
-EXECUTED_CONFIG=""
+LOCAL_LOAD_CONFIG="$WORKSPACE/load-tests/load-test-configuration/local-load-config.json"
+REMOTE_LOAD_CONFIG="$WORKSPACE/load-tests/load-test-configuration/remote-load-config.json"
 
 # ENABLE influx db output
 # INFLUX_DB=true
@@ -32,11 +28,14 @@ if [ -z "$1" ]; then
     exit
 fi  
 
+# EXECUTED_CONFIG will be set by the script, leave it empty
+EXECUTED_CONFIG=""
+
 # Check for time duration 
 if [ -z "$LOAD_TEST_ENDPOINT" ]; then
     echo "[run-load-test.sh]: LOAD_TEST_ENDPOINT Environment variable not set, using localhost:8000"
 
-    EXECUTED_CONFIG=LOCAL_LOAD_CONFIG
+    EXECUTED_CONFIG=$LOCAL_LOAD_CONFIG
     ## If running locally and socket2socket replace with http://localhost:8000 with ws://localhost:8000
     if [[ "$1" =~ "socket2socket" ]]; then
         echo "[run-load-test.sh]: Using ws://localhost:8000 for socket2socket locally"
@@ -46,22 +45,22 @@ if [ -z "$LOAD_TEST_ENDPOINT" ]; then
     # Spin up local webserver in background
     pushd $WORKSPACE > /dev/null 2>&1 
     echo "[run-load-test.sh]: Executing make binrun to run infura webserver"
-    #make binrun > /dev/null 2>&1 &
+    make binrun > /dev/null 2>&1 &
     popd > /dev/null 2>&1 
     sleep 3
 
 else
-    EXECUTED_CONFIG=REMOTE_LOAD_CONFIG
+    EXECUTED_CONFIG=$REMOTE_LOAD_CONFIG
+    ENDPOINT=$LOAD_TEST_ENDPOINT
 fi
 
 
 
 ## Check for the ws extension, update route if nessecary
 if [ -z "$2" ]; then 
-    continue
+    : ## Do nothing with colon
 elif [ "ws" = "$2" ]; then 
     ENDPOINT+="/ws"
-    continue
 else
     echo "[run-load-test.sh]: Error invalid websocket parameter provided. Must be ws"
     echo "[run-load-test.sh]: Example: ./run-load-test.sh heathcheck/healthcheck-loadtest.js"
@@ -73,7 +72,7 @@ fi
 
 
 echo "[run-load-test.sh]: Using loadtest file: ${1}"
-echo "[run-load-test.sh]: Using config from: $EXECUTED_CONFIG"
+echo "[run-load-test.sh]: Using config from EXECUTED_CONFIG: $EXECUTED_CONFIG"
 echo "[run-load-test.sh]: Testing with ${ENDPOINT}"
 
 # Create of temporary file loadtest file to SED
@@ -96,8 +95,8 @@ if [ $INFLUX_DB_SETUP ]; then
 fi  
 
 
-echo "[run-load-test.sh]: Running Command: k6 run --config ${config} ${influx} ${temp_loadtest_path}"
-k6 run --config ${config} ${influx_cmd} ${temp_loadtest_path}
+echo "[run-load-test.sh]: Running Command: k6 run --config ${EXECUTED_CONFIG} ${influx} ${temp_loadtest_path}"
+k6 run --config ${EXECUTED_CONFIG} ${influx_cmd} ${temp_loadtest_path}
 
 # Remove the file
 echo "[run-load-test.sh]: Removing temp loadtest file: ${temp_loadtest_path}"

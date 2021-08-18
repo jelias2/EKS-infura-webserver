@@ -3,17 +3,6 @@ import { check} from 'k6';
 
 let url="SED-URL"
 
-export let options = {
-  stages: [
-    { duration: "10s", target: 10 },
-    { duration: "30s", target: 200 },
-    { duration: "2m", target: 500 },
-    { duration: "1m", target: 200 },
-    { duration: "10s", target: 50 },
-    { duration: "10s", target: 10 },
-   ],
-};
-
 const requests = [
 	`{"jsonrpc":"2.0","method":"eth_getBlockByNumber","params": ["0x5bad55",false],"id":1}`,
 	`{"jsonrpc":"2.0","method":"eth_getBlockByNumber","params": ["0x5bad55",true],"id":1}`,
