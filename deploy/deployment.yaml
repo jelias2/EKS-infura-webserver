@@ -9,9 +9,9 @@ metadata:
   name: infura-webserver-deployment
   namespace: infura
   labels:
-    app: infura
+    app: infura-webserver
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: infura-webserver
@@ -22,12 +22,12 @@ spec:
     spec:
       containers:
       - name: infura-web-server
-        image: infura-web-server:latest
-        imagePullPolicy: Never
+        image: 772813348682.dkr.ecr.us-east-2.amazonaws.com/infura-web-server:latest
+        imagePullPolicy: Always
         resources:
           requests:
-            memory: "250Mi"
-            cpu: ".5"
+            memory: "3Gi"
+            cpu: "1"
         ports:
         - containerPort: 8000
         env:

@@ -65,7 +65,7 @@ export MAINNET_WEBSOCKET_ENDPOINT=<Infura-WS-Endpoint>
     * transactions.go structs releating to transaction request and responses
   * /load-tests contains scripts for load-testing: see more info in the load-testing section
   * /build contains build artifacts
-  * /deploy contains k8s deployment code
+  * /deploy contains k8s deployment code and EKS terraform code
 
 ## Makefile Commands: <a name="makefilecommands"></a>
   * ```make bin``` -> Will build the binary with the artifact sent to /build
@@ -105,6 +105,46 @@ export MAINNET_WEBSOCKET_ENDPOINT=<Infura-WS-Endpoint>
 
 ## Finale: Cranking Up the Loadtests <a name="crankload"></a>]
 * My Loadtest proceedure was as follows
+* Using EKS and terraform I deployment my webserver and exposed it via a load-balancer. The deployment requested 3Gi Memory and 1 vpcu on a AWS t3.medium with up to 5GB network performance
+  * I chose a cloud enviroment as opposed to local for two reasons
+  1. To remove low latency advantages that come with local deployments as this would interfere with test results
+  1. To scale my server as beyond the resources of my local machine
+* Once the service was deployed I used the k6 tool to perform load testing. The load-test tested a single api endpoint and slowly scaled up and down the traffic. The following coniguration was used. 
+```    
+Stage 1: { duration: "10s", target: 10 } Every second for 10 second, 10 users requesting would make a request
+Stage 2: { duration: "30s", target: 200 } Every second for 30 second, 200 users requesting would make a request
+Stage 3: { duration: "2m", target: 500 }, Every second for 2m second, 500 users requesting would make a request
+Stage 4: { duration: "1m", target: 200 }, Every second for 1m second, 200 users requesting would make a request
+Stage 5: { duration: "10s", target: 50 }, Every second for 10s second, 50 users requesting would make a request
+Stage 6: { duration: "10s", target: 10 },  Every second for 10s second, 10 users requesting would make a request
+```
+* **HTTP-HTTP Results**
+  * The fastest RTT to infura is a 4 way tie between all the endpoints coming in around 40 ms (Excluding Healthcheck )
+    * The fastest overall endpoint was the healthcheck  21 ms this is obvious because the health check does not reach out to Infura    
+  * The second fastest endpoint was getBlockNumber with 95% of requests served in under 70.82 ms
+    * I reckon this is because getBlockNumber is a relatively simple to cache request and has a small payload
+  * The slowest endpoint(s) are close getGasPrice and blockByNumber come in at 95% of requests being served in ~107ms
+    * Worth noting that getGasPrice has much lower mean duration of 67 ms, while blockByNumber had a mean of 87 ms
+  * The slowest response time of all was a 6 second call to blockByNumber
+* **Websocket to Websocket Connection Results**
+  * The k6 websocket load test uses different metrics so it will be difficult to compare directly to HTTP-HTTP
+  * Inital Connection Time is expensive: 95% of connecting took under 86ms, average was 74.2 ms. Comparing this to HTTP RTT request in under 70ms. 
+  * Approx 10.1 total messages are send per 1 second. 5.1 sending and 5.1 recieving messages.
+    * This could imply the total RTT from local load test -> infura is approx <100ms = 10.1 messages / 10 seconds which above our average HTTP RTT
+  * TODO: 
+
+
+* **HTTP to Websocket Connection Results**
+  * This approach died pretty quickly once it got to the load testing. Errors such below occured almost instantly
+```
+websocket: unexpected reserved bits 0x 
+
+{"statuscode":400,"message":"websocket: close 1006 (abnormal closure): unexpected EOF"}
+```
+  * I would attribute these bugs to one infura client is writing and reading many HTTP requests from the websocket with zero concern for queue or concurrency
+  * I think websocket client implementation which could handle connecurrent users would solve this issue. This could probably be done with RW mutex and channels
+  * I think there still might be merit to this approach, a lower HTTP request time combined with an already established websocket connection could be worthwhile
+  * 
 
 
 ## Troubleshooting <a name="troubleshooting"></a>
@@ -116,3 +156,26 @@ environment:
       - INFLUXDB_HTTP_MAX_BODY_SIZE=0 <--- Add this line
 ``` 
 in the k6/docker-compose.yaml and restart the service via ```docker compose down &&  docker compose up -d influxdb grafana ```
+
+
+## What I learned <a name="whatilearned"></a>
+
+* Websockets, I had never implemented websockets before this was a chance to try out new technology.
+
+* One websocket for shared across threads is a bad idea, hindsight is 20/20. Errors which showed up in the hybrid approach. Probably would need more time to engineer an elegant solution
+  * One websocket per client worked suprisingly well 
+```
+websocket: unexpected reserved bits 0x 
+{"statuscode":400,"message":"websocket: close 1006 (abnormal closure): unexpected EOF"}
+```
+
+
+* Too many open file descriptors when load testing: each server connection is a file descriptor and there is a soft limit in per use in linux space
+```❯ ulimit -n
+256
+ulimit -n 2048
+```
+
+* Load testing framework k6, plus hands on with influx and grafana
+
+
