@@ -11,7 +11,6 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/jelias2/infra-test/src/apis"
 	"github.com/jelias2/infra-test/src/handlers"
-	client "github.com/jelias2/infra-test/src/ws-client"
 	"go.uber.org/zap"
 )
 
@@ -47,7 +46,7 @@ func main() {
 	)
 
 	log.Info("Creating websockets for endpoint connecting to", zap.String("Url", mainnetWebsocketEndpoint))
-	var wsClients = make(map[apis.ClientName]*client.WebSocketClient)
+	var wsClients = make(map[apis.ClientName]*websocket.Conn)
 	for _, endpoint := range apis.AllWsClients {
 		ws_client, _, err := websocket.DefaultDialer.Dial(mainnetWebsocketEndpoint, nil)
 		if err != nil {

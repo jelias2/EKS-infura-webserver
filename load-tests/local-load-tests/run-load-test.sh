@@ -1,4 +1,11 @@
 #!/bin/sh
+
+
+## The endpoint we wish to query
+#endpoint="http://localhost:8000"
+endpoint="http://a1c84b283bb654a17890753c087a1484-1682976614.us-east-2.elb.amazonaws.com:8000"
+
+
 echo "[run-load-test.sh]: Beginning run-load-test.sh"
 # Check for loadtest script
 if [ -z "$1" ]; then
@@ -31,11 +38,10 @@ if [ -z "$3" ]; then
 fi  
 
 ## Check for the ws extension, update route if nessecary
-endpoint="http://localhost:8000"
 if [ -z "$4" ]; then 
     continue
 elif [ "ws" = "$4" ]; then 
-    endpoint="http://localhost:8000/ws"
+    endpoint+="/ws"
     continue
 else
     echo "[run-load-test.sh]: Error invalid websocket parameter provided. Must be ws"
@@ -66,10 +72,10 @@ temp_loadtest_path="$mydir/$temp_sed_filename"
 echo "[run-load-test.sh]: Creating temp loadtest file: ${temp_loadtest_path}"
 touch ${temp_loadtest_path}
 
-pushd $WORKSPACE > /dev/null 2>&1 
-echo "[run-load-test.sh]: Executing make binrun to run infura webserver"
-make binrun > /dev/null 2>&1 &
-popd > /dev/null 2>&1 
+#pushd $WORKSPACE > /dev/null 2>&1 
+#echo "[run-load-test.sh]: Executing make binrun to run infura webserver"
+#make binrun > /dev/null 2>&1 &
+#popd > /dev/null 2>&1 
 # Let the server spin up
 sleep 5
 
@@ -82,5 +88,5 @@ k6 run --vus ${2} --duration ${3} --out influxdb=http://localhost:8086/k6 ${temp
 
 # Remove the file
 echo "[run-load-test.sh]: Removing temp loadtest file: ${temp_loadtest_path}"
-rm ${temp_loadtest_path}
+#rm ${temp_loadtest_path}
 echo "[run-load-test.sh]: Completed."
