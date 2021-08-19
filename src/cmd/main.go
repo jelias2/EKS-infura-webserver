@@ -65,16 +65,14 @@ func main() {
 	defer handler.WsClients[apis.WsGasPrice].Close()
 	defer handler.WsClients[apis.WsTxByBlockNumberAndIndex].Close()
 
-	interrupt := make(chan os.Signal, 1) // Channel to listen for interrupt signal to terminate gracefully
+	interrupt := make(chan os.Signal, 1) // listen for system interrupt signal to terminate gracefully
 	signal.Notify(interrupt, os.Interrupt)
 	go func() {
 		for {
-			// On system interrupt shut all sockets down
 			sig := <-interrupt
 			if sig != nil {
 				log.Info("Websocket Recieved Interrupt, closing channel")
-				// Cleanly close the connection by sending a close message and then
-				// waiting (with timeout) for the server to close the connection.
+				// Cleanly close the connection
 				for _, endpoint := range apis.AllWsClients {
 					handler.WsClients[endpoint].WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 					if err != nil {
@@ -87,24 +85,19 @@ func main() {
 		}
 	}()
 
-	// Route handles & endpoints
 	r.HandleFunc("/health", handler.Healthcheck).Methods("GET")
 	r.HandleFunc("/", handler.Healthcheck).Methods("GET")
-
 	r.HandleFunc("/blocknumber", handler.GetBlockNumber).Methods("GET")
 	r.HandleFunc("/gasprice", handler.GetGasPrice).Methods("GET")
 	r.HandleFunc("/blockbynumber", handler.GetBlockByNumber).Methods("POST")
 	r.HandleFunc("/txbyblockandindex", handler.GetTransactionByBlockNumberAndIndex).Methods("POST")
-
 	r.HandleFunc("/ws/health", handler.Healthcheck).Methods("GET")
 	r.HandleFunc("/ws/blocknumber", handler.WebSocketGetBlockNumber).Methods("GET")
 	r.HandleFunc("/ws/gasprice", handler.WebSocketGetGasPrice).Methods("GET")
 	r.HandleFunc("/ws/blockbynumber", handler.WebSocketGetBlockByNumber).Methods("POST")
 	r.HandleFunc("/ws/txbyblockandindex", handler.WebSocketGetTransactionByBlockNumberAndIndex).Methods("POST")
-
 	r.HandleFunc("/socket2socket", handler.Socket2socket)
 
-	// Start server
 	log.Info("Beginning to server traffic on port")
 	log.Fatal("Error Serving traffic ", zap.Error(http.ListenAndServe(":8000", r)))
 }

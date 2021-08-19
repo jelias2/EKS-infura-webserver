@@ -23,7 +23,6 @@ func (h *Handler) Socket2socket(w http.ResponseWriter, r *http.Request) {
 
 		_, msg, err := clientConn.ReadMessage()
 		if err != nil {
-			// If client closed unexpectedly, log error gracefully
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				h.Log.Error("Client closed unexpecttedly")
 			} else {

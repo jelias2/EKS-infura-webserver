@@ -68,7 +68,6 @@ func (h *Handler) WebSocketGetBlockByNumberHandler(body []byte, umarshallStruct 
 		return errorResponse
 	}
 
-	// Umarshall response into the type of the umarshallStruct
 	switch umarshallStruct.(type) {
 	case apis.GetBlockByNumberTxDetailsResponse:
 		wsResult := &apis.GetBlockByNumberTxDetailsResponse{}

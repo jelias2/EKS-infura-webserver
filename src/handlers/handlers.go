@@ -166,7 +166,6 @@ func (h *Handler) GetBlockByNumberResponse(body []byte, unmashallStruct interfac
 
 func (h *Handler) DebugResponse(caller string, resp *resty.Response, err error) {
 	h.Log.Info("Handling response from", zap.String("caller", caller))
-	// Explore response object
 	h.Log.Info("Response Info:",
 		zap.Error(err),
 		zap.Int("Status Code:", resp.StatusCode()),
