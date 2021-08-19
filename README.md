@@ -38,7 +38,7 @@
       * ```make docker-run``` -> via docker on localhost:8000
       * ```make binrun``` -> run plain binary localhost:8000
   1. Begin using the endpoints via the Endpoint Documentation section below
-      * If you are familar with postman you can download and import the postman api collection from `/load-tests/jelias-infura-rest.postman_collection.json```
+      * If you are familar with postman you can download and import the postman api collection from ```/load-tests/jelias-infura-rest.postman_collection.json```
   #### Cloud Context
   1. Follow the steps to configure aws and EKS with terraform https://learn.hashicorp.com/tutorials/terraform/eks
   1. Build and push the image to ECR: https://www.stacksimplify.com/aws-eks/aws-ecr-eks/learn-to-use-docker-images-built-and-pushed-to-aws-ecr-and-use-in-aws-eks/
