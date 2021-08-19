@@ -1,15 +1,5 @@
 import http from 'k6/http';
-import { sleep } from 'k6';
-export let options = {
-	stages: [
-		{ duration: "10s", target: 10 },
-		{ duration: "30s", target: 200 },
-		{ duration: "2m", target: 500 },
-		{ duration: "1m", target: 200 },
-		{ duration: "10s", target: 50 },
-		{ duration: "10s", target: 10 },
-	   ],
-};
+import { check, sleep} from 'k6';
 
 // Use only infura endpoints to base against socket2socket connections
 
@@ -30,7 +20,7 @@ const txIndexReqs = [
 	`{"block": "0xc6fd38","index": "0x21"}`,
 	];
 
-const blockNumberReqs = [
+let	blockNumberReqs = [
 	`{"block": "0x5bad55","txdetails": "false"}`,
 	`{"block": "0x5bad55","txdetails": "true"}`,
 	`{"block": "earliest","txdetails": "true"}`,
@@ -48,57 +38,22 @@ const blockNumberReqs = [
 	];
 
 let url = "SED-URL"
+let gaspriceUrl=(url+'/gasprice')
+let blockNumUrl=(url+'/blocknumber')
+let blockByNumUrl=(url+'/blockbynumber')
+let txIndexUrl=(url+'/txbyblockandindex')
 export default function () {
-	let headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+	let headers = { 'Content-Type': 'application/json' };
 
-	var blockNuReq = blockNumberReqs[Math.floor(Math.random()*blockNumberReqs.length)];
-	//http.post(url+='/blockbynumber', blockNuReq, { headers: headers });
+	let res = http.get(gaspriceUrl, { headers: headers });
+
+	res = http.get(blockNumUrl, { headers: headers });
+
+	let blockNuReq = blockNumberReqs[Math.floor(Math.random()*blockNumberReqs.length)];
+	res = http.post(blockByNumUrl, blockNuReq, { headers: headers });
+
 
 	var txIReq = txIndexReqs[Math.floor(Math.random()*txIndexReqs.length)];
-	//http.post(url+='/txbyblockandindex', txIReq, { headers: headers });
-
-	//http.get(url+='/blocknumber', { headers: headers });
-
-      let req1 = {
-         method: 'GET',
-	 url: url+="/blocknumber",
-         params: {
-           headers: { 'Content-Type': 'application/json"' },
-         },
-      };
-      let req2 = {
-         method: 'GET',
-	 url: url+="/blocknumber",
-         params: {
-           headers: { 'Content-Type': 'application/json"' },
-         },
-      };
-
-      let req3 = {
-        method: 'POST',
-        url: url+="/txbyblockandindex",
-        body: {
-          block: "0xc6fd38",
-	  txdetails: "0x10"
-        },
-        params: {
-          headers: { 'Content-Type': 'application/json"' },
-        },
-      };
-
-
-      let req4 = {
-        method: 'POST',
-        url: url+="/blockbynumber",
-        body: {
-          block: "0xc6fd38",
-	  txdetails: "true"
-        },
-        params: {
-          headers: { 'Content-Type': 'application/json"' },
-        },
-      };
-
-      let responses = http.batch([req1, req2, req3, req4]);
+	http.post(txIndexUrl, txIReq, { headers: headers });
 }
 

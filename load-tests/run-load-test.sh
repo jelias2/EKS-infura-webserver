@@ -29,7 +29,7 @@ fi
 # EXECUTED_CONFIG will be set by the script, leave it empty
 EXECUTED_CONFIG=""
 
-# Check for time duration 
+# Check for load test endpoint 
 if [ -z "$LOAD_TEST_ENDPOINT" ]; then
     echo "[run-load-test.sh]: LOAD_TEST_ENDPOINT Environment variable not set, using localhost:8000"
 
@@ -88,13 +88,12 @@ echo "[run-load-test.sh]: Running k6 tool"
 
 # If we are processing data to influx run with appropriate args 
 influx_cmd=""
-set -x 
 if [ "$INFLUX_DB_SETUP" == "true" ]; then
     influx_cmd="--out influxdb=http://localhost:8086/k6"
-fi  
+fi
 
 
-echo "[run-load-test.sh]: Running Command: k6 run --config ${EXECUTED_CONFIG} ${influx} ${temp_loadtest_path}"
+echo "[run-load-test.sh]: Running Command: k6 run --config ${EXECUTED_CONFIG} ${influx_cmd} ${temp_loadtest_path}"
 k6 run --config ${EXECUTED_CONFIG} ${influx_cmd} ${temp_loadtest_path}
 
 # Remove the file
