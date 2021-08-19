@@ -8,6 +8,7 @@
 # Table of contents
 - [Infura Web Server](#infura-web-server)
 - [Table of contents](#table-of-contents)
+- [Repository Setup <a name="repositorysetup"></a>](#repository-setup-)
   - [How to Run <a name="howtrun"></a>](#how-to-run-)
       - [Locally](#locally)
       - [Cloud Context](#cloud-context)
@@ -15,12 +16,26 @@
       - [Setup and Running script](#setup-and-running-script)
       - [Visualization](#visualization)
         - [Load testing a remote server](#load-testing-a-remote-server)
-  - [Repository Setup <a name="repositorysetup"></a>](#repository-setup-)
   - [Makefile Commands: <a name="makefilecommands"></a>](#makefile-commands-)
   - [Endpoint Documentation <a name="endpointdocumentation"></a>](#endpoint-documentation-)
-  - [Finale: Cranking Up the Loadtests <a name="crankload"></a>]](#finale-cranking-up-the-loadtests-)
+  - [Finale: Cranking Up the Loadtests <a name="crankload"></a>](#finale-cranking-up-the-loadtests-)
   - [Troubleshooting <a name="troubleshooting"></a>](#troubleshooting-)
   - [What I learned <a name="whatilearned"></a>](#what-i-learned-)
+
+## Repository Setup <a name="repositorysetup"></a>
+  * /src contains all of the source code
+  * /cmd contains the main.go which executes setup and initalization of the webserver
+  * /handlers: the files which perform the logic for each endpoint
+    * handlers.go: contains the pure HTTP REST endpoints and logic
+    * infura-websocket-client.go: Contains the hybrid HTTP REST Websocket endpoints and logic
+    * socket2socket.go: contains a websocket implementation server
+  * /apis
+    * apis.go contains the basic kinds and json mashalling structure for the webserver
+    * block.go: structs relating to block request and responses\
+    * transactions.go structs releating to transaction request and responses
+  * /load-tests contains scripts for load-testing: see more info in the load-testing section
+  * /build contains build artifacts
+  * /deploy contains k8s deployment code and EKS terraform code
 
 ## How to Run <a name="howtrun"></a>
   #### Locally 
@@ -39,9 +54,15 @@
       * ```make binrun``` -> run plain binary localhost:8000
   1. Begin using the endpoints via the Endpoint Documentation section below
       * If you are familar with postman you can download and import the postman api collection from ```/load-tests/jelias-infura-rest.postman_collection.json```
+      * Be sure to include "http://" and ":8000" in your url, and exclude "http://" if using websockets in postman
   #### Cloud Context
-  1. Follow the steps to configure aws and EKS with terraform https://learn.hashicorp.com/tutorials/terraform/eks
+  1. Follow the steps to configure AWS and EKS accounts https://learn.hashicorp.com/tutorials/terraform/eks
+    * ```cd deploy/eks-terraform && terraform init```
+    * ``` terraform apply```
   1. Build and push the image to ECR: https://www.stacksimplify.com/aws-eks/aws-ecr-eks/learn-to-use-docker-images-built-and-pushed-to-aws-ecr-and-use-in-aws-eks/
+    * ```make dockerk8```
+    * ``` docker tag <image-id> <ecr-endpoint>/infura-web-server:latest
+    * ```docker push <ecr-endpoint>/infura-web-server:latest
   1. Edit the k8s secret in the deployment.yaml with the appropriate values
   1. kubectl apply deployment.yaml
   1. Get the service endpoint by examining the external IP in the output of ```kubectl get service -n infura infura-webserver-loadbalancer```
@@ -53,7 +74,7 @@
   * Run localized load-tests oad test command execution ```./run-load-test.sh <endpoint>/<test-name> <ws>```
     * Example ```./run-load-test.sh endpoints/gasprice/gasprice-loadtest.js```
     * Example ``` ./run-load-test.sh endpoints/txbyblockandindex/single-request-body.js ws```
-  * The test load can be configurate by editing the configuration files within ```load-test-configuration```
+  * The test load can be configured by editing the configuration files within ```load-test-configuration```
   * local-load-config.json will be executed against local instances of the server
   * remote-load-config.json will be executed against the LOAD_TEST_ENDPOINT
 #### Visualization 
@@ -67,27 +88,13 @@
   * TODO add screenshot
   * On the next page find the k6 dropdown, select "myinfluxdb (default)"
   * import 
-
+  * edit .envrc and set ```export INFLUX_DB_SETUP=true```
   * Watch the results over grafana and the k6 output at end of test
   * Note: socket2socket tests results will not show up in grafana default dashboard as the websocket metrics are different fields than http -rest versions
 ##### Load testing a remote server
   * Set the environment variable ```LOAD_TEST_ENDPOINT`` either in the .envrc or commandline
-  * 
-
-## Repository Setup <a name="repositorysetup"></a>
-  * /src contains all of the source code
-  * /cmd contains the main.go which executes setup and initalization of the webserver
-  * /handlers: the files which perform the logic for each endpoint
-    * handlers.go: contains the pure HTTP REST endpoints and logic
-    * infura-websocket-client.go: Contains the hybrid HTTP REST Websocket endpoints and logic
-    * socket2socket.go: contains a websocket implementation server
-  * /apis
-    * apis.go contains the basic kinds and json mashalling structure for the webserver
-    * block.go: structs relating to block request and responses\
-    * transactions.go structs releating to transaction request and responses
-  * /load-tests contains scripts for load-testing: see more info in the load-testing section
-  * /build contains build artifacts
-  * /deploy contains k8s deployment code and EKS terraform code
+  * Run load tests as normal. They should now point to your remote endpoint
+  * Example ``` ./run-load-test.sh endpoints/txbyblockandindex/single-request-body.js```
 
 ## Makefile Commands: <a name="makefilecommands"></a>
   * ```make bin``` -> Will build the binary with the artifact sent to /build
@@ -117,13 +124,13 @@
 * ```POST /txbyblockandindex or /ws/txbyblockandindex```
     * Takes in two parameters block of type string [required] and index of type string [required], and will return the specific transaction located at the block and index
     * Example Body: ```{"block": "0xc68e80","index": "0x11"}```
-    * Example Response: TODO
+    * Example Response: ```{"jsonrpc":"2.0","id":1,"result":{"blockHash":"0xdb4b2434d7c14d5d41646851d88ad5c201392b0b00eb1f58029f5f5bd7ae450c","blockNumber":"0xc68e80","from":"0x918453d249a22b6a8535c81e21f7530cd6ab59f1","gas":"0x3```
 * ```WS /socket2socket```
     * socket2socket endpoint will open a websocket connection to the server, and will allow for websocket commuication to infura websocket server. All requests from the infura websocket api documentation are valid. 
     * Example Request: ```{"jsonrpc":"2.0","method":"eth_getBlockByNumber","params": ["latest",false],"id":1}```
-    * Example Response:  TODO
+    * Example Response:  ```{"jsonrpc":"2.0","id":1,"result":{"baseFeePerGas":"0x54f0502be","difficulty":"0x1bdf9e56e4f0fa","extraData":"0x6e616e6f706f6f6c2e6f7267","gasLimit":"0x1cb1ab1","gasUsed":"0x1c6a865","hash":"0x2ad443e7```
     * Example Request: ```{"jsonrpc":"2.0","method":"eth_getTransactionByBlockNumberAndIndex","params": ["0x5BAD55","0x0"],"id":1}```
-    * Example Response: TODO
+    * Example Response: ```{"jsonrpc":"2.0","id":1,"result":{"blockHash":"0xb3b20624f8f0f86eb50dd04688409e5cea4bd02d700bf6e79e9384d47d6a5a35","blockNumber":"0x5bad55","from":"0xfbb1b73c4f0bda4f67dca266ce6ef42f520fbb98","gas":"0"....```
 
 ## Finale: Cranking Up the Loadtests <a name="crankload"></a>]
 * My Loadtest proceedure was as follows
@@ -131,7 +138,7 @@
   * I chose a cloud enviroment as opposed to local for two reasons
   1. To remove low latency advantages that come with local deployments as this would interfere with test results
   1. To scale my server as beyond the resources of my local machine
-* Once the service was deployed I used the k6 tool to perform load testing. The load-test tested a single api endpoint and slowly scaled up and down the traffic. The following coniguration was used. 
+* Once the service was deployed I used the k6 tool to perform load testing. The load-test tested a single api endpoint and slowly scaled up and down the traffic. The following coniguration was used and can be found in the ```load-tests/load-test-configuration/remote-load-config.json``` See k6 options for more details [here](https://k6.io/docs/using-k6/options/)
 ```    
 Stage 1: { duration: "10s", target: 10 } Every second for 10 second, 10 users requesting would make a request
 Stage 2: { duration: "30s", target: 200 } Every second for 30 second, 200 users requesting would make a request
@@ -140,6 +147,8 @@ Stage 4: { duration: "1m", target: 200 }, Every second for 1m second, 200 users 
 Stage 5: { duration: "10s", target: 50 }, Every second for 10s second, 50 users requesting would make a request
 Stage 6: { duration: "10s", target: 10 },  Every second for 10s second, 10 users requesting would make a request
 ```
+* Result Images [slideshow](https://docs.google.com/presentation/d/1p4VgZk1b6k3pd1k6-PU-qqkHxL8BaxRbJixD6qyXUZo/edit?usp=sharing)
+
 * **HTTP-HTTP Results**
   * The fastest RTT to infura is a 4 way tie between all the endpoints coming in around 40 ms (Excluding Healthcheck )
     * The fastest overall endpoint was the healthcheck  21 ms this is obvious because the health check does not reach out to Infura    
@@ -170,8 +179,8 @@ websocket: unexpected reserved bits 0x
 
 
 ## Troubleshooting <a name="troubleshooting"></a>
-* ```ERRO[0010] Couldn't write stats                          error="{\"error\":\"Request Entity Too Large\"}\n" output=InfluxDBv1``` 
-  * This error occurs when the loadtest data payload is too large for the influx DB. To adjust the payload limit, set the following line to the environment section of the influxdb service. Note this may crash influxdb if the test data is too much 
+* ```ERRO[0010] Couldn't write stats  error="{\"error\":\"Request Entity Too Large\"}\n" output=InfluxDBv1``` 
+  * I believe error occurs when the loadtest data payload is too large for the influx DB. It seems to happen when the DB is running for extended periods of time To adjust the payload limit, set the following line to the environment section of the influxdb service. Note this may crash influxdb if the test data is too large 
 ```
 environment:
       - INFLUXDB_DB=k6
@@ -179,29 +188,20 @@ environment:
 ``` 
 in the k6/docker-compose.yaml and restart the service via ```docker compose down &&  docker compose up -d influxdb grafana```
 
-  *  Load testing error``` ERRO[0069] dial tcp 18.190.129.128:8000: socket: too many open files ```
+* ``` ERRO[0069] dial tcp 18.190.129.128:8000: socket: too many open files ```
     * This occurs when your machine has hit its limit maxmimum connection determine by ulimit -n
     * It can be overridden with the ulimit command it a user limit
-
 
 ## What I learned <a name="whatilearned"></a>
 
 * Websockets, I had never implemented websockets before this was a chance to try out new technology.
-
 * One websocket for shared across threads is a bad idea, hindsight is 20/20. Errors which showed up in the hybrid approach. Probably would need more time to engineer an elegant solution
   * One websocket per client worked suprisingly well 
 ```
 websocket: unexpected reserved bits 0x 
 {"statuscode":400,"message":"websocket: close 1006 (abnormal closure): unexpected EOF"}
 ```
-
-
-* Too many open file descriptors when load testing: each server connection is a file descriptor and there is a soft limit in per use in linux space
-```❯ ulimit -n
-256
-ulimit -n 2048
-```
-
 * Load testing framework k6, plus hands on with influx and grafana
+* Refreshed EKS and a little bit of terraform skills
 
 
