@@ -23,11 +23,15 @@ func (h *Handler) Socket2socket(w http.ResponseWriter, r *http.Request) {
 
 		_, msg, err := clientConn.ReadMessage()
 		if err != nil {
-			h.Log.Error("Failed to read message from websocket client")
+			// If client closed unexpectedly, log error gracefully
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+				h.Log.Error("Client closed unexpecttedly")
+			} else {
+				h.Log.Error("Failed to read message from websocket client", zap.Error(err))
+			}
 			break
 		}
 		h.Log.Info("Recieved Websocket Message", zap.String("Message", string(msg)))
-
 		if bytes.Contains(msg, []byte("true")) || bytes.Contains(msg, []byte("false")) {
 			if infuraReq, ok = h.formatInfuraBooeanRequestMsg(msg); !ok {
 				clientConn.WriteMessage(websocket.TextMessage, infuraReq)

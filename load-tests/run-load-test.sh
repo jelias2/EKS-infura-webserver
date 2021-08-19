@@ -88,7 +88,8 @@ echo "[run-load-test.sh]: Running k6 tool"
 
 # If we are processing data to influx run with appropriate args 
 influx_cmd=""
-if [ $INFLUX_DB_SETUP ]; then
+set -x 
+if [ "$INFLUX_DB_SETUP" == "true" ]; then
     influx_cmd="--out influxdb=http://localhost:8086/k6"
 fi  
 
