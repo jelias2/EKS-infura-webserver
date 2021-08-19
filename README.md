@@ -9,18 +9,18 @@
 - [Infura Web Server](#infura-web-server)
 - [Table of contents](#table-of-contents)
 - [Repository Setup <a name="repositorysetup"></a>](#repository-setup-)
-  - [How to Run <a name="howtrun"></a>](#how-to-run-)
-      - [Locally](#locally)
-      - [Cloud Context](#cloud-context)
-  - [How to Load Test <a name="howtoloadtest"></a>](#how-to-load-test-)
-      - [Setup and Running script](#setup-and-running-script)
-      - [Visualization](#visualization)
-        - [Load testing a remote server](#load-testing-a-remote-server)
-  - [Makefile Commands: <a name="makefilecommands"></a>](#makefile-commands-)
-  - [Endpoint Documentation <a name="endpointdocumentation"></a>](#endpoint-documentation-)
-  - [Finale: Cranking Up the Loadtests <a name="crankload"></a>](#finale-cranking-up-the-loadtests-)
-  - [Troubleshooting <a name="troubleshooting"></a>](#troubleshooting-)
-  - [What I learned <a name="whatilearned"></a>](#what-i-learned-)
+ - [How to Run <a name="howtrun"></a>](#how-to-run-)
+   - [Locally](#locally)
+   - [Cloud Context](#cloud-context)
+- [How to Load Test <a name="howtoloadtest"></a>](#how-to-load-test-)
+ - [Setup and Running script](#setup-and-running-script)
+ - [Visualization](#visualization)
+ - [Load testing a remote server](#load-testing-a-remote-server)
+- [Makefile Commands: <a name="makefilecommands"></a>](#makefile-commands-)
+- [Endpoint Documentation <a name="endpointdocumentation"></a>](#endpoint-documentation-)
+- [Finale: Cranking Up the Loadtests <a name="crankload"></a>](#finale-cranking-up-the-loadtests-)
+- [Troubleshooting <a name="troubleshooting"></a>](#troubleshooting-)
+- [What I learned <a name="whatilearned"></a>](#what-i-learned-)
 
 ## Repository Setup <a name="repositorysetup"></a>
   * /src contains all of the source code
@@ -84,10 +84,8 @@
   * (Optional ) Spin up Grafana and influx db for visualization 
   * ```$WORKSPACE/load-tests/k6 && docker-compose up -d influxdb grafana```
   * Navigate to localhost:3000 in your browser for the grafana interface
-  * Import via grafana.com: Enter 2587. Click load
-  * TODO add screenshot
-  * On the next page find the k6 dropdown, select "myinfluxdb (default)"
-  * import 
+  * Import via grafana.com: Enter 2587. Click load [image](https://photos.app.goo.gl/QSDGRebhJxmvHNxN7)
+  * On the next page find the k6 dropdown, select "myinfluxdb (default)" [image](https://photos.app.goo.gl/HQXXkXuBwS9ELb5T7) 
   * edit .envrc and set ```export INFLUX_DB_SETUP=true```
   * Watch the results over grafana and the k6 output at end of test
   * Note: socket2socket tests results will not show up in grafana default dashboard as the websocket metrics are different fields than http -rest versions
@@ -162,22 +160,18 @@ Stage 6: { duration: "10s", target: 10 },  Every second for 10s second, 10 users
   * Inital Connection Time is expensive: 95% of connecting took under 86ms, average was 74.2 ms. Comparing this to HTTP RTT request in under 70ms. 
   * Approx 10.1 total messages are send per 1 second. 5.1 sending and 5.1 recieving messages.
     * This could imply the total RTT from local load test -> infura is approx <100ms = 10.1 messages / 10 seconds which above our average HTTP RTT
-  * TODO: 
+  * Link to results slideshow: 
 
 
 * **HTTP to Websocket Connection Results**
-  * This approach died pretty quickly once it got to the load testing. Errors such below occured almost instantly
+  * This approach died pretty quickly once it got to the load testing with an amount of significant users 20+. Errors such below occured almost instantly
 ```
-websocket: unexpected reserved bits 0x 
-
-{"statuscode":400,"message":"websocket: close 1006 (abnormal closure): unexpected EOF"}
+websocket: unexpected reserved bits 0x...
 ```
-  * I would attribute these bugs to one infura client is writing and reading many HTTP requests from the websocket with zero concern for queue or concurrency
-  * I think websocket client implementation which could handle connecurrent users would solve this issue. This could probably be done with RW mutex and channels
+  * I would attribute these bugs to one infura client is writing and reading many HTTP requests from a single websocket with zero concern for queuing or concurrent read writes
+  * I think a websocket client implementation which could handle conncurrent r/w with RW mutex or channels would solve this issue.
   * I think there still might be merit to this approach, a lower HTTP request time combined with an already established websocket connection could be worthwhile
-  * 
-
-
+ 
 ## Troubleshooting <a name="troubleshooting"></a>
 * ```ERRO[0010] Couldn't write stats  error="{\"error\":\"Request Entity Too Large\"}\n" output=InfluxDBv1``` 
   * I believe error occurs when the loadtest data payload is too large for the influx DB. It seems to happen when the DB is running for extended periods of time To adjust the payload limit, set the following line to the environment section of the influxdb service. Note this may crash influxdb if the test data is too large 
@@ -191,6 +185,8 @@ in the k6/docker-compose.yaml and restart the service via ```docker compose down
 * ``` ERRO[0069] dial tcp 18.190.129.128:8000: socket: too many open files ```
     * This occurs when your machine has hit its limit maxmimum connection determine by ulimit -n
     * It can be overridden with the ulimit command it a user limit
+    
+* If endpoints are not responsding, be sure include http:// and :8000, as well as change http:// -> ws:// for local websocket tests
 
 ## What I learned <a name="whatilearned"></a>
 
